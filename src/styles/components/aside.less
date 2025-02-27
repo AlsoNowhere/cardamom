@@ -1,0 +1,39 @@
+.aside {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3rem;
+  height: 100%;
+  .apple-bg;
+  .shadow;
+  .font-size-large;
+
+  &__title-container {
+    position: relative;
+    height: calc(120px + 1rem * 2);
+  }
+
+  &__title {
+    display: block;
+    position: absolute;
+    top: -3rem;
+    left: 0;
+    padding: 0 1rem;
+    transform: rotate(90deg);
+    transform-origin: 0% 100%;
+    line-height: 3rem;
+    color: @snow;
+  }
+
+  button + button {
+    svg line {
+      transition: @time;
+    }
+
+    &:hover {
+      svg line {
+        stroke: @black;
+      }
+    }
+  }
+}

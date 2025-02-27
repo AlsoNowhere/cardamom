@@ -1,16 +1,31 @@
-import { textStore } from "../stores/text.store";
+import { mainStore } from "../stores/main.store";
 
-import { storage_key } from "../data/constants.data";
+import { Line } from "../models/Line.model";
+
+import { lineId, storage_key } from "../data/constants.data";
+
+const resolveData = (lines: Array<any>) => {
+  const output: Array<Line> = [];
+
+  for (let line of lines) {
+    const newLine = new Line(line);
+    output.push(newLine);
+  }
+
+  return output;
+};
 
 export const loadData = () => {
   const data =
-    localStorage.getItem(storage_key) ??
-    JSON.stringify({ content: "", height: 200 });
+    localStorage.getItem(storage_key) ?? JSON.stringify({ lines: [{}] });
 
-  const parsed: { content: string; height: number } = JSON.parse(data);
+  const parsed: { lines: Array<any>; lineIndex: number } = JSON.parse(data);
 
-  const { content, height } = parsed;
+  const lines = resolveData(parsed.lines);
 
-  textStore.content = content;
-  textStore.height = height;
+  mainStore.lines = lines;
+
+  if (!!parsed.lineIndex) {
+    lineId.index = parsed.lineIndex;
+  }
 };

@@ -1,13 +1,13 @@
-import { textStore } from "../stores/text.store";
+import { mainStore } from "../stores/main.store";
 
-import { storage_key } from "../data/constants.data";
+import { lineId, storage_key } from "../data/constants.data";
 
 export const saveData = () => {
-  const { content, height } = textStore;
+  const { lines } = mainStore;
 
   const data = JSON.stringify({
-    content,
-    height,
+    lines,
+    lineIndex: lineId.index,
   });
 
   localStorage.setItem(storage_key, data);
