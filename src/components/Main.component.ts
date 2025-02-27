@@ -1,27 +1,36 @@
-import { component, div, MintEvent, MintScope, node } from "mint";
+import { component, div, mFor, MintScope, mRef, node } from "mint";
 
+import { ListItem } from "./ListItem.component";
 import { Options } from "./tools/Options.component";
-import { TextContent } from "./TextContent.component";
+
+import { mainStore } from "../stores/main.store";
 
 class MainComponent extends MintScope {
-  doNothing: MintEvent;
-
   constructor() {
     super();
 
-    this.doNothing = (event) => event.preventDefault();
+    mainStore.connect(this);
   }
 }
 
-export const Main = component(
-  "main",
-  MainComponent,
-  { class: "padding-top-large" },
-  [
-    div({ class: "constrain centred" }, [
-      node(Options),
+export const Main = component("main", MainComponent, {}, [
+  div({ class: "constrain centred padding-top" }, [
+    node(Options),
 
-      node(TextContent, { "[textElementRef]": "textElementRef" }),
-    ]),
-  ]
-);
+    node(
+      "form",
+      { class: "card snow-bg", "(submit)": "doNothing" },
+      node(
+        "ul",
+        { class: "list", ...mRef("listElementRef") },
+        node("li", { ...mFor("lines"), mKey: "id", class: "list-item" }, [
+          node(ListItem, {
+            "[content]": "content",
+            "[style]": "getStyles",
+            "[index]": "_i",
+          }),
+        ])
+      )
+    ),
+  ]),
+]);

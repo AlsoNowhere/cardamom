@@ -1,0 +1,49 @@
+.list-item {
+  position: relative;
+
+  label {
+    margin: 0;
+
+    input {
+      position: relative;
+      .smoke-light-border;
+    }
+
+    &:hover {
+      ~ .list-item__button {
+        visibility: visible;
+        opacity: 1;
+      }
+    }
+  }
+
+  &__button {
+    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+
+    &:hover {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    &--add {
+      top: calc(1rem + 1rem / 8);
+      left: calc(-2rem - 1rem / 4);
+    }
+
+    &--label {
+      top: calc((1rem + 1rem / 8) * -1);
+      left: calc(-2rem - 1rem / 4);
+
+      button {
+        font-weight: bold;
+      }
+    }
+
+    &--delete {
+      top: calc(1rem / 2);
+      right: calc(-2rem - 1rem / 4);
+    }
+  }
+}
