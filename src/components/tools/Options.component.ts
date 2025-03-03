@@ -15,7 +15,9 @@ class OptionsComponent extends MintScope {
 export const Options = component(
   "section",
   OptionsComponent,
-  { class: "margin-bottom", ...mRef("optionsElementRef") },
+  {
+    ...mRef("optionsElementRef"),
+  },
   node(
     "ul",
     { class: "list flex" },

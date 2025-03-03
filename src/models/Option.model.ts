@@ -4,6 +4,7 @@ export class Option {
   icon?: string;
   label?: string;
   class?: string;
+  title: string;
   content?: TMintContent;
   action: () => void;
 
@@ -11,10 +12,11 @@ export class Option {
     icon?: string;
     label?: string;
     class?: string;
+    title: string;
     content?: TMintContent;
     action: () => void;
   }) {
-    const { icon, label, content, action } = args;
+    const { icon, label, title, content, action } = args;
 
     if (icon) {
       this.icon = icon;
@@ -27,8 +29,10 @@ export class Option {
     if (args.class) {
       this.class = `${args.class} margin-right-small`;
     } else {
-      this.class = "margin-right-small";
+      this.class = "margin-right-small margin-bottom-small";
     }
+
+    this.title = title;
 
     if (content) {
       this.content = content;
