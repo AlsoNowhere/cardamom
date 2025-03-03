@@ -3,6 +3,7 @@ import { mainStore } from "../stores/main.store";
 import { Line } from "../models/Line.model";
 
 import { lineId, storage_key } from "../data/constants.data";
+import { variables } from "../data/variables.data";
 
 const resolveData = (lines: Array<any>) => {
   const output: Array<Line> = [];
@@ -19,7 +20,8 @@ export const loadData = () => {
   const data =
     localStorage.getItem(storage_key) ?? JSON.stringify({ lines: [{}] });
 
-  const parsed: { lines: Array<any>; lineIndex: number } = JSON.parse(data);
+  const parsed: { lines: Array<any>; lineIndex: number; fontSize: number } =
+    JSON.parse(data);
 
   const lines = resolveData(parsed.lines);
 
@@ -28,4 +30,6 @@ export const loadData = () => {
   if (!!parsed.lineIndex) {
     lineId.index = parsed.lineIndex;
   }
+
+  variables.fontSize = parsed.fontSize ?? 16;
 };

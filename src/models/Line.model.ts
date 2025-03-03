@@ -1,6 +1,7 @@
 import { styles as _styles } from "sage";
 
 import { lineId } from "../data/constants.data";
+import { variables } from "../data/variables.data";
 
 export class Line {
   content: string;
@@ -28,7 +29,11 @@ export class Line {
     }
 
     this.getStyles = () => {
-      return _styles(this.styles);
+      return _styles({
+        ...this.styles,
+        "font-size": `${variables.fontSize}px`,
+        "line-height": "calc(2em - 2px)",
+      });
     };
   }
 }

@@ -1,4 +1,4 @@
-import { component, div, mFor, MintScope, mRef, node } from "mint";
+import { component, mFor, MintScope, mRef, node } from "mint";
 
 import { ListItem } from "./ListItem.component";
 import { Options } from "./tools/Options.component";
@@ -13,8 +13,11 @@ class MainComponent extends MintScope {
   }
 }
 
-export const Main = component("main", MainComponent, {}, [
-  div({ class: "constrain centred padding-top" }, [
+export const Main = component(
+  "main",
+  MainComponent,
+  { class: "padding-large" },
+  [
     node(Options),
 
     node(
@@ -32,5 +35,5 @@ export const Main = component("main", MainComponent, {}, [
         ])
       )
     ),
-  ]),
-]);
+  ]
+);
