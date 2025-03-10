@@ -1,7 +1,5 @@
 import { refresh } from "mint";
 
-import { saveData } from "../save.logic";
-
 import { mainStore } from "../../stores/main.store";
 
 export const changeStyle = (style: string, value: string, toggle = false) => {
@@ -20,8 +18,6 @@ export const changeStyle = (style: string, value: string, toggle = false) => {
   } else {
     styles[style] = value;
   }
-
-  saveData();
 
   refresh(mainStore);
 
