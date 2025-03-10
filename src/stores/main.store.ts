@@ -2,13 +2,20 @@ import { MintEvent, refresh, Store } from "mint";
 
 import { wait } from "sage";
 
-import { loadData } from "../logic/load.logic";
+import { addKeyEvents } from "../logic/add-key-events.logic";
+import { addLoadFileEvent } from "../logic/add-load-file-event.logic";
 
 import { Line } from "../models/Line.model";
 
-import { keysHeld } from "../data/keys-held.data";
-
 class MainStore extends Store {
+  filePathName: string;
+  contentFromFile: {
+    1: string;
+    2: string;
+    3: string;
+    4: string;
+    5: string;
+  };
   lines: Array<Line>;
   currentIndex: number;
   listElementRef: HTMLUListElement;
@@ -17,26 +24,18 @@ class MainStore extends Store {
 
   constructor() {
     super({
+      filePathName: null,
+      contentFromFile: null,
       lines: [],
       currentIndex: null,
       listElementRef: null,
 
       oninit: async () => {
-        document.addEventListener("keydown", ({ key }) => {
-          if (key === "Control") {
-            keysHeld.Control = true;
-          }
-        });
-
-        document.addEventListener("keyup", ({ key }) => {
-          if (key === "Control") {
-            keysHeld.Control = false;
-          }
-        });
+        addKeyEvents();
+        addLoadFileEvent();
 
         await wait();
 
-        loadData();
         refresh(mainStore);
       },
 

@@ -4,7 +4,6 @@ import { wait } from "sage";
 
 import { Button, Field, TField } from "thyme";
 
-import { saveData } from "../logic/save.logic";
 import { addLine } from "../logic/add-line.logic";
 import { deleteLine } from "../logic/delete-line.logic";
 import { inputKeyDown } from "../logic/input-keydown.logic";
@@ -14,7 +13,6 @@ import { optionsStore } from "../stores/options.store";
 
 const inputChange: MintEvent<HTMLInputElement> = function (_, element) {
   mainStore.lines[this.index].content = element.value;
-  saveData();
 };
 
 const inputFocus = async function () {
@@ -29,12 +27,6 @@ const inputBlur = async () => {
     mainStore.currentIndex = null;
   }
 };
-
-// const addLabel = function () {
-//   // const line = mainStore.lines[this.index];
-//   // saveData();
-//   // refresh(mainStore);
-// };
 
 class ListItemComponent extends MintScope {
   index: number;
@@ -58,7 +50,6 @@ class ListItemComponent extends MintScope {
 
     this.buttons = [
       { theme: "snow", icon: "level-down", class: "add", action: addLine },
-      // { theme: "snow", label: "L", class: "label", action: addLabel },
       { theme: "tomato", icon: "trash-o", class: "delete", action: deleteLine },
     ];
 
