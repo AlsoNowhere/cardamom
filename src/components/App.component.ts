@@ -1,6 +1,6 @@
 import { component, MintScope, node } from "mint";
 
-import { Main } from "./Main.component";
+import { Main } from "./structure/Main.component";
 
 import { Aside } from "./structure/Aside.component";
 
