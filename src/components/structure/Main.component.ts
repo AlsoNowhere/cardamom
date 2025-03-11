@@ -1,10 +1,10 @@
 import { component, mFor, MintScope, mRef, node } from "mint";
 
-import { ListItem } from "./ListItem.component";
-import { Controls } from "./tools/Controls.component";
-import { Options } from "./tools/Options.component";
+import { ListItem } from "../ListItem.component";
+import { Controls } from "../tools/Controls.component";
+import { Options } from "../tools/Options.component";
 
-import { mainStore } from "../stores/main.store";
+import { mainStore } from "../../stores/main.store";
 
 class MainComponent extends MintScope {
   constructor() {
