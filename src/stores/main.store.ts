@@ -9,15 +9,10 @@ import { Line } from "../models/Line.model";
 
 class MainStore extends Store {
   filePathName: string;
-  contentFromFile: {
-    1: string;
-    2: string;
-    3: string;
-    4: string;
-    5: string;
-  };
+  contentFromFile: Array<string>;
   lines: Array<Line>;
   currentIndex: number;
+  colours: Record<string, string>;
   listElementRef: HTMLUListElement;
 
   doNothing: MintEvent<HTMLFormElement>;
@@ -28,6 +23,7 @@ class MainStore extends Store {
       contentFromFile: null,
       lines: [],
       currentIndex: null,
+      colours: {},
       listElementRef: null,
 
       oninit: async () => {
