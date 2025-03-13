@@ -1,5 +1,7 @@
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
+const fileService = require("fs");
+const { dialog } = require("electron");
 
 Menu.setApplicationMenu(null);
 
@@ -12,7 +14,7 @@ function createWindow() {
       preload: path.join(__dirname, "./preload.js"),
       nodeIntegration: true,
       enableRemoteModule: true,
-      contextIsolation: false,
+      contextIsolation: true,
     },
   });
 
@@ -24,6 +26,27 @@ function createWindow() {
 
   ipcMain.on("close", () => {
     mainWindow.close();
+  });
+
+  ipcMain.on("loadFile", async (event) => {
+    const response = await dialog.showOpenDialog({
+      properties: ["openFile"],
+    });
+
+    if (response === undefined || response.filePaths.length === 0) {
+      event.sender.send("actionReply", {});
+      return;
+    }
+
+    const {
+      filePaths: [filePathName],
+    } = response;
+    const content = fileService.readFileSync(filePathName, "utf-8");
+    event.sender.send("actionReply", { content, filePathName });
+  });
+
+  ipcMain.on("saveFile", async (event, { content, filePathName }) => {
+    fileService.writeFileSync(filePathName, content);
   });
 
   /* Open the DevTools. */

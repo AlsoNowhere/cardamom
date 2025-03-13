@@ -1,39 +1,56 @@
 import { refresh } from "mint";
 
-import { resovleContent } from "./resolve-content.logic";
+import {
+  resolveColours,
+  resolveLine3,
+  resovleLoadContent,
+} from "./resolve-content.logic";
 
 import { mainStore } from "../stores/main.store";
-
-import { Line } from "../models/Line.model";
 
 export const loadFile = (content: string, filePathName: string) => {
   mainStore.filePathName = filePathName;
 
+  // console.log(content);
+
+  // ** Parsed the rich text file
   const contentLines = content.split("\n");
 
-  let line3 = contentLines[2].substring(0, contentLines[2].indexOf(" "));
-  if (!contentLines[2].includes(" ")) {
-    line3 = contentLines[2];
+  const index = contentLines.findIndex((x) => x.includes("\\pard"));
+
+  mainStore.colours = {};
+  resolveColours(contentLines.find((x) => x.includes("\\colortbl")));
+
+  // ** On line 3 we find settings but also the beginning of the content.
+  // ** We want only the user content, which can be found after the first space
+  let line3 = contentLines[index].substring(
+    0,
+    contentLines[index].indexOf(" ")
+  );
+  if (!contentLines[index].includes(" ")) {
+    // ** If there is no content (empty file) then make sure we take the whole line.
+    line3 = contentLines[index];
   }
 
-  mainStore.contentFromFile = {
-    1: contentLines[0],
-    2: contentLines[1],
-    3: line3,
-    4: contentLines[contentLines.length - 2],
-    5: contentLines[contentLines.length - 1],
-  };
+  line3 = resolveLine3(line3);
+
+  // ** Save the content for later; when we put it back together to save the file.
+  mainStore.contentFromFile = [...contentLines.slice(0, index), line3];
 
   const lines: Array<string> = [];
 
-  if (contentLines[2].includes(" ")) {
-    lines.push(contentLines[2].substring(contentLines[2].indexOf(" ") + 1));
+  // ** Check if the content is empty.
+  if (contentLines[index].includes(" ")) {
+    lines.push(
+      contentLines[index].substring(contentLines[index].indexOf(" ") + 1)
+    );
   } else {
     lines.push("");
   }
 
   {
-    let i = 3;
+    // ** Extract the content lines.
+    let i = index + 1;
     while (i < contentLines.length - 2) {
       const line = contentLines[i];
       lines.push(line);
@@ -41,7 +58,7 @@ export const loadFile = (content: string, filePathName: string) => {
     }
   }
 
-  mainStore.lines = lines.map((x) => new Line({ content: resovleContent(x) }));
+  mainStore.lines = resovleLoadContent(lines);
 
   refresh(mainStore);
 };
