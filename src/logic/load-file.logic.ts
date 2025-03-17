@@ -1,14 +1,54 @@
 import { refresh } from "mint";
 
-import {
-  resolveColours,
-  resolveLine3,
-  resovleLoadContent,
-} from "./resolve-content.logic";
+import { resolveColours, resolvefirstContent } from "./resolve-content.logic";
+import { resovleLoadContent } from "./load/resolve-load.logic";
 
 import { mainStore } from "../stores/main.store";
 
+const getContent = (contentLines: Array<string>) => {
+  const firstContentLineIndex = contentLines.findIndex((x) =>
+    x.includes("\\pard")
+  );
+  const contentLinesBeforeContent = contentLines.slice(
+    0,
+    firstContentLineIndex
+  );
+
+  let firstLineWithContentNonContent = contentLines[firstContentLineIndex];
+  let openingContent = "";
+  let firstLineOfContent = "";
+  if (firstLineWithContentNonContent.charAt(0) === "{") {
+    const index = firstLineWithContentNonContent.indexOf("}") + 1;
+    openingContent = firstLineWithContentNonContent.substring(0, index);
+    firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
+      index,
+      firstLineWithContentNonContent.length
+    );
+  }
+  if (firstLineWithContentNonContent.includes(" ")) {
+    const index = firstLineWithContentNonContent.indexOf(" ");
+    firstLineOfContent = firstLineWithContentNonContent.substring(
+      index + 1,
+      firstLineWithContentNonContent.length
+    );
+    firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
+      0,
+      index
+    );
+  }
+  firstLineWithContentNonContent =
+    openingContent + firstLineWithContentNonContent;
+
+  return {
+    firstContentLineIndex,
+    contentLinesBeforeContent,
+    firstLineWithContentNonContent,
+    firstLineOfContent,
+  };
+};
+
 export const loadFile = (content: string, filePathName: string) => {
+  // ** Set the file name on the store so we have it for later (when saving or editing).
   mainStore.filePathName = filePathName;
 
   // console.log(content);
@@ -16,41 +56,41 @@ export const loadFile = (content: string, filePathName: string) => {
   // ** Parsed the rich text file
   const contentLines = content.split("\n");
 
-  const index = contentLines.findIndex((x) => x.includes("\\pard"));
+  const {
+    firstContentLineIndex,
+    contentLinesBeforeContent,
+    firstLineWithContentNonContent,
+    firstLineOfContent,
+  } = getContent(contentLines);
 
-  mainStore.colours = {};
-  resolveColours(contentLines.find((x) => x.includes("\\colortbl")));
-
-  // ** On line 3 we find settings but also the beginning of the content.
-  // ** We want only the user content, which can be found after the first space
-  let line3 = contentLines[index].substring(
-    0,
-    contentLines[index].indexOf(" ")
+  // ** Set the colours for this file.
+  const colourLine = contentLinesBeforeContent.find((x) =>
+    x.includes("\\colortbl")
   );
-  if (!contentLines[index].includes(" ")) {
-    // ** If there is no content (empty file) then make sure we take the whole line.
-    line3 = contentLines[index];
-  }
-
-  line3 = resolveLine3(line3);
+  mainStore.colours = resolveColours(colourLine);
 
   // ** Save the content for later; when we put it back together to save the file.
-  mainStore.contentFromFile = [...contentLines.slice(0, index), line3];
+  mainStore.contentFromFile = [
+    ...contentLinesBeforeContent,
+    resolvefirstContent(firstLineWithContentNonContent),
+  ];
 
   const lines: Array<string> = [];
 
   // ** Check if the content is empty.
-  if (contentLines[index].includes(" ")) {
+  if (firstLineOfContent !== "") {
     lines.push(
-      contentLines[index].substring(contentLines[index].indexOf(" ") + 1)
+      firstLineOfContent.substring(firstLineOfContent.indexOf(" ") + 1)
     );
-  } else {
+  }
+  // ** We need to have at least one line, even if its an empty string.
+  else {
     lines.push("");
   }
 
   {
     // ** Extract the content lines.
-    let i = index + 1;
+    let i = firstContentLineIndex + 1;
     while (i < contentLines.length - 2) {
       const line = contentLines[i];
       lines.push(line);

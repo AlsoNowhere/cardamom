@@ -2,30 +2,56 @@ import { resolveSaveContent } from "./resolve-content.logic";
 
 import { mainStore } from "../stores/main.store";
 
+const endOfFileContent = "}\r" + "\n" + "\u0000";
+
+const resolveFirstContentLine = (line: string, appContent: string) => {
+  // ** Remove an unneeded line break that might be added.
+  if (line.substring(line.length - 5) === "\\par\r") {
+    line = line.substring(0, line.length - 5);
+  }
+
+  // ** If there is no appContent then we don't need to add a space in.
+  line = appContent === "" ? line + "\n" : line + " " + appContent + "\n";
+
+  return line;
+};
+
 export const saveToFile = () => {
-  const appContent = resolveSaveContent(mainStore.lines);
+  const { appContent, coloursLine } = resolveSaveContent(mainStore.lines);
+  const hasFileColoursIndex = mainStore.contentFromFile.findIndex((x) =>
+    x.includes("\\colortbl")
+  );
 
-  const otherLines = mainStore.contentFromFile.join("\n");
-
-  // const line1 = mainStore.contentFromFile["1"] + "\n";
-  // const line2 = mainStore.contentFromFile["2"] + "\n";
-  let line3 = mainStore.contentFromFile[-1];
-
-  if (line3.substring(line3.length - 5) === "\\par\r") {
-    line3 = line3.substring(0, line3.length - 5);
+  // ** File HAS colours AND colours ARE defined in app.
+  if (hasFileColoursIndex !== -1 && coloursLine !== undefined) {
+    mainStore.contentFromFile.splice(hasFileColoursIndex, 1, coloursLine);
+  }
+  // ** File DOES NOT HAVE colours AND colours ARE defined in app.
+  else if (hasFileColoursIndex === -1 && coloursLine !== undefined) {
+    mainStore.contentFromFile.splice(1, 0, coloursLine);
+  }
+  // ** File HAS colours AND colours ARE NOT defined in app.
+  else if (hasFileColoursIndex !== -1 && coloursLine === undefined) {
+    mainStore.contentFromFile.splice(hasFileColoursIndex, 1);
   }
 
-  let contentLine = line3 + " " + appContent + "\n";
-  if (appContent === "") {
-    contentLine = line3 + "\n";
-  }
+  const contentLinesBeforeContent = mainStore.contentFromFile
+    .slice(0, -1)
+    .join("\n");
 
-  const content = otherLines + contentLine + "}\r" + "\n" + "\u0000";
+  const firstLineWithContent = resolveFirstContentLine(
+    mainStore.contentFromFile.at(-1),
+    appContent
+  );
+
+  const content =
+    contentLinesBeforeContent + firstLineWithContent + endOfFileContent;
 
   // console.log(content);
 
   const saveToFile = new CustomEvent("saveToFile", {
     detail: { content, filePathName: mainStore.filePathName },
   });
+
   window.dispatchEvent(saveToFile);
 };

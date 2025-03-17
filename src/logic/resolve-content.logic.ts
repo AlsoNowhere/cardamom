@@ -1,22 +1,25 @@
-import { mainStore } from "../stores/main.store";
-
 import { Line } from "../models/Line.model";
 
 export const resolveColours = (colours?: string) => {
-  if (colours === undefined) return;
+  const output: Array<string> = [];
+  if (colours === undefined) return output;
+
   const parts = colours.split(";");
+
   parts.forEach((colour, index) => {
     if (index === 0 || index === parts.length - 1) return;
-
-    mainStore.colours[index] = `rgb(${colour
-      .replace("\\", "")
+    const _colour = `rgb(${colour
       .replace(/[a-z]/g, "")
-      .replace(/\\/g, ", ")})`;
+      .replace(/(?!^)[\\]/g, ", ")
+      .replace(/\\/g, "")})`;
+    output.push(_colour);
   });
+
+  return output;
 };
 
-export const resolveLine3 = (line3) => {
-  const parts = line3.split("\\");
+export const resolvefirstContent = (firstLineWithContent) => {
+  const parts = firstLineWithContent.split("\\");
 
   const newParts = parts.reduce((a, b) => {
     if (b.slice(0, 2) === "sa") return a;
@@ -30,67 +33,49 @@ export const resolveLine3 = (line3) => {
   return newParts.join("\\");
 };
 
-export const resovleLoadContent = (lines: Array<string>) => {
-  const output: Array<Line> = [];
-  let isBold = false;
-  let setColour = null;
-  for (let line of lines) {
-    const styles: Record<string, string> = {};
-    let content = line;
-
-    // ** Paragraph
-    content = content.replace(/\\par/g, "");
-
-    // ** Bold
-    if (isBold || content.includes("\\b")) {
-      isBold = true;
-      styles["font-weight"] = "bold";
-    }
-
-    if (content.includes("\\b0")) {
-      isBold = false;
-      content = content.replace(/\\b0/g, "");
-    }
-
-    content = content.replace(/\\b\s/g, "");
-
-    // ** Font colour
-    for (let [index, colour] of Object.entries(mainStore.colours)) {
-      if (content.includes(`\\cf${index}`)) {
-        setColour = colour;
-      }
-      if (setColour !== null) {
-        styles.color = setColour;
-      }
-    }
-
-    if (content.includes("\\cf0")) {
-      setColour = null;
-      content = content.replace(`\\cf0`, "");
-    }
-
-    for (let [index] of Object.entries(mainStore.colours)) {
-      content = content.replace(`\\cf${index} `, "");
-    }
-
-    output.push(
-      new Line({
-        content,
-        styles,
-      })
-    );
-  }
-  return output;
+const getColours = (colours: Array<string>) => {
+  return colours
+    .map((x) => {
+      const [r, g, b] = x.replace("rgb(", "").replace(/[)\s]/g, "").split(",");
+      return `\\red${r}\\green${g}\\blue${b}`;
+    })
+    .join(";");
 };
 
 export const resolveSaveContent = (lines: Array<Line>) => {
-  return lines
+  const colours: Array<string> = [];
+
+  const appContent = lines
     .map(({ content, styles }) => {
-      // if (content === "") return content;
       if (styles["font-weight"] === "bold") {
         content = "\\b " + content + "\\b0";
+      }
+      if (styles["font-style"] === "italic") {
+        content = "\\i " + content + "\\i0";
+      }
+      if (styles["text-decoration"] === "underline") {
+        content = "\\ul " + content + "\\ulnone";
+      }
+      if (styles["color"] !== undefined) {
+        const colour = styles["color"];
+        const colourIndex = colours.findIndex((x) => x === colour);
+        if (colourIndex !== -1) {
+          content = `\\cf${colourIndex + 1} ${content}\\cf0`;
+        } else {
+          colours.push(colour);
+          const colourIndex = colours.length - 1;
+          content = `\\cf${colourIndex + 1} ${content}\\cf0`;
+        }
       }
       return `${content}\\par`;
     })
     .join("\n");
+
+  return {
+    appContent,
+    coloursLine:
+      colours.length === 0
+        ? undefined
+        : `{\\colortbl ;${getColours(colours)};}`,
+  };
 };

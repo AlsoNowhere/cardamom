@@ -1,11 +1,11 @@
 {
   "name": "cardamom",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "A rich text editor",
-  "main": "./electron/index.js",
+  "main": "./electron/main.js",
   "scripts": {
     "start": "electron .",
-    "build:app": "electron-packager . --overwrite --icon=src/img/kuma_4_icon.ico",
+    "build:app": "electron-packager . --overwrite --icon=src/img/neko_5_icon.ico",
     "build:js": "rollup --config",
     "watch:js": "rollup --config --watch",
     "build:css": "lessc ./src/styles/index.less ./dist/styles/index.css",

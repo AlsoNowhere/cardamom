@@ -12,7 +12,7 @@ class MainStore extends Store {
   contentFromFile: Array<string>;
   lines: Array<Line>;
   currentIndex: number;
-  colours: Record<string, string>;
+  colours: Array<string>;
   listElementRef: HTMLUListElement;
 
   doNothing: MintEvent<HTMLFormElement>;
