@@ -1,9 +1,9 @@
 import { refresh } from "mint";
 
-import { mainStore } from "../../stores/main.store";
+import { listStore } from "../../stores/list.store";
 
 export const changeStyle = (style: string, value: string, toggle = false) => {
-  const { currentIndex, lines, listElementRef } = mainStore;
+  const { currentIndex, lines, listElementRef } = listStore;
 
   if (currentIndex === null) return;
 
@@ -19,7 +19,7 @@ export const changeStyle = (style: string, value: string, toggle = false) => {
     styles[style] = value;
   }
 
-  refresh(mainStore);
+  refresh(listStore);
 
   listElementRef.children[currentIndex].querySelector("input").focus();
 };

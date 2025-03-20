@@ -1,43 +1,43 @@
-import { component, mFor, MintScope, mRef, node } from "mint";
+// import { component, mFor, MintScope, mRef, node } from "mint";
 
-import { ListItem } from "../ListItem.component";
-import { Controls } from "../tools/Controls.component";
-import { Options } from "../tools/Options.component";
+// import { ListItem } from "../ListItem.component";
+// import { Controls } from "../tool-bars/Controls.component";
+// import { Options } from "../tool-bars/Options.component";
 
-import { mainStore } from "../../stores/main.store";
+// import { listStore } from "../../stores/list.store";
 
-class MainComponent extends MintScope {
-  constructor() {
-    super();
+// class MainComponent extends MintScope {
+//   constructor() {
+//     super();
 
-    mainStore.connect(this);
-  }
-}
+//     listStore.connect(this);
+//   }
+// }
 
-export const Main = component(
-  "main",
-  MainComponent,
-  { class: "padding-large" },
-  [
-    node(Controls),
-    node(Options),
+// export const Main = component(
+//   "main",
+//   MainComponent,
+//   { class: "padding-large" },
+//   [
+//     node(Controls),
+//     node(Options),
 
-    node(
-      "form",
-      { class: "card snow-bg", "(submit)": "doNothing" },
-      node(
-        "ul",
-        { class: "list", ...mRef("listElementRef") },
-        node("li", { ...mFor("lines"), mKey: "id", class: "list-item" }, [
-          node(ListItem, {
-            "[content]": "content",
-            "[style]": "getStyles",
-            "[index]": "_i",
-          }),
-        ])
-      )
-    ),
+//     node(
+//       "form",
+//       { class: "card snow-bg", "(submit)": "doNothing" },
+//       node(
+//         "ul",
+//         { class: "list", ...mRef("listElementRef") },
+//         node("li", { ...mFor("lines"), mKey: "id", class: "list-item" }, [
+//           node(ListItem, {
+//             "[content]": "content",
+//             "[style]": "getStyles",
+//             "[index]": "_i",
+//           }),
+//         ])
+//       )
+//     ),
 
-    node("div", { id: "the-real-content" }),
-  ]
-);
+//     node("div", { id: "the-real-content" }),
+//   ]
+// );

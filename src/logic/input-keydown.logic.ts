@@ -8,7 +8,7 @@ import {
   toggleUnderline,
 } from "./options-toggles.logic";
 
-import { mainStore } from "../stores/main.store";
+import { listStore } from "../stores/list.store";
 
 import { keysHeld } from "../data/keys-held.data";
 
@@ -19,14 +19,14 @@ export const inputKeyDown: MintEvent<HTMLInputElement> = function (
 
   if (key === "Enter") {
     addLine.apply(this);
-    const element = mainStore.listElementRef.children[this.index + 1];
+    const element = listStore.listElementRef.children[this.index + 1];
     const inputElement = element.querySelector("input");
     inputElement.focus();
   }
 
   if (key === "Delete" && keysHeld.Control) {
     deleteLine.apply(this);
-    const element = mainStore.listElementRef.children[this.index];
+    const element = listStore.listElementRef.children[this.index];
     if (!!element) {
       const inputElement = element.querySelector("input");
       inputElement.focus();
@@ -35,15 +35,15 @@ export const inputKeyDown: MintEvent<HTMLInputElement> = function (
 
   if (key === "ArrowUp") {
     if (this.index !== 0) {
-      const element = mainStore.listElementRef.children[this.index - 1];
+      const element = listStore.listElementRef.children[this.index - 1];
       const inputElement = element.querySelector("input");
       inputElement.focus();
     }
   }
 
   if (key === "ArrowDown") {
-    if (this.index !== mainStore.lines.length - 1) {
-      const element = mainStore.listElementRef.children[this.index + 1];
+    if (this.index !== listStore.lines.length - 1) {
+      const element = listStore.listElementRef.children[this.index + 1];
       const inputElement = element.querySelector("input");
       inputElement.focus();
     }

@@ -1,9 +1,9 @@
 import { refresh } from "mint";
 
-import { mainStore } from "../stores/main.store";
+import { listStore } from "../stores/list.store";
 
 export const deleteLine = function () {
-  if (mainStore.lines.length === 1) return;
-  mainStore.lines.splice(this.index, 1);
-  refresh(mainStore);
+  if (listStore.lines.length === 1) return;
+  listStore.lines.splice(this.index, 1);
+  refresh(listStore);
 };

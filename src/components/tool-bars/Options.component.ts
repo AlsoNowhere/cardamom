@@ -1,6 +1,6 @@
 import { component, mFor, MintScope, mRef, node } from "mint";
 
-import { Button } from "thyme";
+import { Button, ColourSelector } from "thyme";
 
 import { optionsStore } from "../../stores/options.store";
 
@@ -18,16 +18,15 @@ export const Options = component(
   {
     ...mRef("optionsElementRef"),
   },
-  node(
-    "ul",
-    { class: "list flex" },
+  node("ul", { class: "list flex" }, [
     node(Button, {
       ...mFor("options"),
       mKey: "_i",
-      large: true,
+      "[theme]": "theme",
       square: true,
       "[content]": "content",
       "[onClick]": "action",
-    })
-  )
+    }),
+    node(ColourSelector, { "[onInput]": "chooseColour" }),
+  ])
 );

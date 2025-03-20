@@ -1,6 +1,7 @@
 import { TMintContent } from "mint";
 
 export class Option {
+  theme?: string;
   icon?: string;
   label?: string;
   class?: string;
@@ -9,6 +10,7 @@ export class Option {
   action: () => void;
 
   constructor(args: {
+    theme?: string;
     icon?: string;
     label?: string;
     class?: string;
@@ -16,7 +18,11 @@ export class Option {
     content?: TMintContent;
     action: () => void;
   }) {
-    const { icon, label, title, content, action } = args;
+    const { theme, icon, label, title, content, action } = args;
+
+    if (theme) {
+      this.theme = theme;
+    }
 
     if (icon) {
       this.icon = icon;

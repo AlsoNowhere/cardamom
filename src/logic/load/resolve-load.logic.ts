@@ -3,6 +3,7 @@ import { resolveItalics } from "./resolve-italic.logic";
 import { resolveUnderline } from "./resolve-underline.logic";
 import { resolveColours } from "./resolve-colours.logic";
 import { resolveLink } from "./resolve-link.logic";
+import { resolveOther } from "./resolve-other.logic";
 
 import { Line } from "../../models/Line.model";
 
@@ -39,6 +40,9 @@ export const resovleLoadContent = (lines: Array<string>) => {
 
     // ** Colours
     content = resolveColours(states, content, styles);
+
+    // ** Other things resolved, like tab indents
+    content = resolveOther(content);
 
     output.push(
       new Line({
