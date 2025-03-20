@@ -31,8 +31,8 @@ export class Line {
     this.getStyles = () => {
       return _styles({
         ...this.styles,
-        "font-size": `${variables.fontSize}px`,
-        "line-height": "calc(2em - 2px)",
+        // "font-size": `${variables.fontSize}px`,
+        // "line-height": "calc(2em - 2px)",
       });
     };
   }

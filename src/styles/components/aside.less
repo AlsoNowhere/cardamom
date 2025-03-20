@@ -7,6 +7,7 @@
   .apple-bg;
   .shadow;
   .font-size-large;
+  -webkit-app-region: drag;
 
   &__title-container {
     position: relative;
@@ -25,14 +26,18 @@
     color: @snow;
   }
 
-  button + button {
-    svg line {
-      transition: @time;
-    }
+  button {
+    -webkit-app-region: no-drag;
 
-    &:hover {
+    + button {
       svg line {
-        stroke: @black;
+        transition: @time;
+      }
+
+      &:hover {
+        svg line {
+          stroke: @black;
+        }
       }
     }
   }

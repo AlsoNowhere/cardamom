@@ -11,7 +11,7 @@ import {
 import { Button, Field } from "thyme";
 
 import { saveToFile } from "../../logic/save-to-file.logic";
-import { mainStore } from "../../stores/main.store";
+import { listStore } from "../../stores/list.store";
 
 class ControlsComponent extends MintScope {
   hasFileLoaded: Resolver<boolean>;
@@ -24,21 +24,21 @@ class ControlsComponent extends MintScope {
   constructor() {
     super();
 
-    this.hasFileLoaded = new Resolver(() => mainStore.filePathName !== null);
+    this.hasFileLoaded = new Resolver(() => listStore.filePathName !== null);
 
     this.filePathName = new Resolver(() =>
-      mainStore.filePathName.split("\\").pop().split(".").shift()
+      listStore.filePathName.split("\\").pop().split(".").shift()
     );
 
     this.doNothing = (event) => event.preventDefault();
 
     this.updateFileName = (_, element) => {
-      const filePath = mainStore.filePathName
+      const filePath = listStore.filePathName
         .split("\\")
         .slice(0, -1)
         .join("\\");
       const newValue = filePath + "\\" + element.value + ".rtf";
-      mainStore.filePathName = newValue;
+      listStore.filePathName = newValue;
     };
 
     this.openFile = () => {
@@ -66,7 +66,6 @@ export const Controls = component("section", ControlsComponent, {}, [
     node(Button, {
       icon: "download",
       class: "margin-right-small",
-      large: true,
       square: true,
       "[onClick]": "openFile",
     }),
@@ -74,7 +73,6 @@ export const Controls = component("section", ControlsComponent, {}, [
     node(Button, {
       theme: "blueberry",
       icon: "floppy-o",
-      large: true,
       square: true,
       "[onClick]": "saveToFile",
     }),

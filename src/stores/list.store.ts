@@ -7,7 +7,7 @@ import { addLoadFileEvent } from "../logic/add-load-file-event.logic";
 
 import { Line } from "../models/Line.model";
 
-class MainStore extends Store {
+class ListStore extends Store {
   filePathName: string;
   contentFromFile: Array<string>;
   lines: Array<Line>;
@@ -32,7 +32,7 @@ class MainStore extends Store {
 
         await wait();
 
-        refresh(mainStore);
+        refresh(listStore);
       },
 
       doNothing(event) {
@@ -42,4 +42,4 @@ class MainStore extends Store {
   }
 }
 
-export const mainStore = new MainStore();
+export const listStore = new ListStore();

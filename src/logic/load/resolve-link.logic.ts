@@ -1,8 +1,5 @@
 export const resolveLink = (content: string) => {
-  if (
-    content.substring(0, 8) === "{{\\field" &&
-    content.includes("HYPERLINK")
-  ) {
+  if (content.includes("HYPERLINK")) {
     const target = "HYPERLINK ";
     const slice = content.substring(
       content.indexOf(target) + target.length,

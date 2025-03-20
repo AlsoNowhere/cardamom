@@ -1,31 +1,63 @@
-import { component, div, mFor, MintEvent, MintScope, node } from "mint";
+import {
+  component,
+  div,
+  mFor,
+  MintEvent,
+  MintScope,
+  node,
+  refresh,
+} from "mint";
 
 import { wait } from "sage";
 
 import { Button, Field, TField } from "thyme";
 
-import { addLine } from "../logic/add-line.logic";
-import { deleteLine } from "../logic/delete-line.logic";
-import { inputKeyDown } from "../logic/input-keydown.logic";
+import { addLine } from "../../logic/add-line.logic";
+import { deleteLine } from "../../logic/delete-line.logic";
+import { inputKeyDown } from "../../logic/input-keydown.logic";
 
-import { mainStore } from "../stores/main.store";
-import { optionsStore } from "../stores/options.store";
+import { listStore } from "../../stores/list.store";
+import { optionsStore } from "../../stores/options.store";
+import { options } from "../../data/options.data";
 
 const inputChange: MintEvent<HTMLInputElement> = function (_, element) {
-  mainStore.lines[this.index].content = element.value;
+  listStore.lines[this.index].content = element.value;
 };
 
 const inputFocus = async function () {
   await wait();
-  mainStore.currentIndex = this.index;
+  listStore.currentIndex = this.index;
+
+  if (listStore.lines[this.index].styles["font-weight"] === "bold") {
+    options[0].theme = "blueberry";
+  } else {
+    options[0].theme = undefined;
+  }
+
+  if (listStore.lines[this.index].styles["font-style"] === "italic") {
+    options[1].theme = "blueberry";
+  } else {
+    options[1].theme = undefined;
+  }
+
+  if (listStore.lines[this.index].styles["text-decoration"] === "underline") {
+    options[2].theme = "blueberry";
+  } else {
+    options[2].theme = undefined;
+  }
+
+  refresh(optionsStore);
 };
 
 const inputBlur = async () => {
   await wait();
 
   if (!optionsStore.optionsElementRef.contains(document.activeElement)) {
-    mainStore.currentIndex = null;
+    listStore.currentIndex = null;
   }
+
+  options[0].theme = undefined;
+  refresh(optionsStore);
 };
 
 class ListItemComponent extends MintScope {

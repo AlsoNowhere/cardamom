@@ -1,8 +1,9 @@
 import { component, MintScope, node } from "mint";
 
-import { Main } from "./structure/Main.component";
-
 import { Aside } from "./structure/Aside.component";
+import { Controls } from "./tool-bars/Controls.component";
+import { Options } from "./tool-bars/Options.component";
+import { List } from "./list/List.component";
 
 class AppComponent extends MintScope {
   constructor() {
@@ -10,4 +11,11 @@ class AppComponent extends MintScope {
   }
 }
 
-export const App = component("<>", AppComponent, {}, [node(Aside), node(Main)]);
+export const App = component("<>", AppComponent, {}, [
+  node(Aside),
+  node("main", { class: "padding-large" }, [
+    node(Controls),
+    node(Options),
+    node(List),
+  ]),
+]);

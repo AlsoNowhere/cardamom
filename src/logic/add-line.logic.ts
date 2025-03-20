@@ -1,10 +1,10 @@
 import { refresh } from "mint";
 
-import { mainStore } from "../stores/main.store";
+import { listStore } from "../stores/list.store";
 
 import { Line } from "../models/Line.model";
 
 export const addLine = function () {
-  mainStore.lines.splice(this.index + 1, 0, new Line());
-  refresh(mainStore);
+  listStore.lines.splice(this.index + 1, 0, new Line());
+  refresh(listStore);
 };

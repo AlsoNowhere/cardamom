@@ -1,3 +1,3 @@
 export const variables = {
-  fontSize: 16,
+  fontSize: 10,
 };
