@@ -1,9 +1,4 @@
-import { MintEvent, refresh, Store } from "mint";
-
-import { wait } from "sage";
-
-import { addKeyEvents } from "../logic/add-key-events.logic";
-import { addLoadFileEvent } from "../logic/add-load-file-event.logic";
+import { MintEvent, Store } from "mint";
 
 import { Line } from "../models/Line.model";
 
@@ -12,6 +7,7 @@ class ListStore extends Store {
   contentFromFile: Array<string>;
   lines: Array<Line>;
   currentIndex: number;
+  lastCurrentIndex: number;
   colours: Array<string>;
   listElementRef: HTMLUListElement;
 
@@ -23,17 +19,9 @@ class ListStore extends Store {
       contentFromFile: null,
       lines: [],
       currentIndex: null,
+      lastCurrentIndex: null,
       colours: {},
       listElementRef: null,
-
-      oninit: async () => {
-        addKeyEvents();
-        addLoadFileEvent();
-
-        await wait();
-
-        refresh(listStore);
-      },
 
       doNothing(event) {
         event.preventDefault();

@@ -4,39 +4,45 @@ import { resolveColours, resolvefirstContent } from "./resolve-content.logic";
 import { resovleLoadContent } from "./load/resolve-load.logic";
 
 import { listStore } from "../stores/list.store";
+import { appStore } from "../stores/app.store";
 
 const getContent = (contentLines: Array<string>) => {
   // ** The first line of content will be the first line to have "\par in".
-  const firstContentLineIndex = contentLines.findIndex((x) =>
-    x.includes("\\par")
-  );
+  // const firstContentLineIndex = contentLines.findIndex((x) =>
+  //   x.includes("\\par")
+  // );
   // ** This means the lines from the start until here are non content lines.
-  const contentLinesBeforeContent = contentLines.slice(
-    0,
-    firstContentLineIndex
-  );
+  // const contentLinesBeforeContent = contentLines.slice(
+  //   0,
+  //   firstContentLineIndex
+  // );
 
-  const firstLineWithContent = contentLines[firstContentLineIndex];
-  let beforeContent = "";
+  const firstContentLine = contentLines.find((x) => x.includes("\\par"));
+  const contentIndex = contentLines.indexOf(firstContentLine);
+  const linesBeforeContent = contentLines.slice(0, contentIndex);
+
+  // const firstLineWithContent = contentLines[firstContentLineIndex];
+  let preContent = "";
   // let openingContent = "";
   let firstContent = "";
 
-  if (firstLineWithContent.includes("{")) {
-    const index = firstLineWithContent.lastIndexOf("}") + 1;
-    beforeContent += firstLineWithContent.substring(0, index);
-    firstContent = firstLineWithContent.substring(
-      index,
-      firstLineWithContent.length
-    );
-  }
+  const index = firstContentLine.includes("{")
+    ? firstContentLine.lastIndexOf("}") + 1
+    : 0;
+  const { length } = firstContentLine;
+  preContent += firstContentLine.substring(0, index);
+  firstContent = firstContentLine.substring(index, length);
 
   {
     const [firstMatch] = [...firstContent.matchAll(/\s[^\\]/g)];
-    beforeContent += firstContent.substring(0, firstMatch.index);
-    firstContent = firstContent.substring(
-      firstMatch.index + 1,
-      firstContent.length
-    );
+    if (firstMatch === undefined) {
+      firstContent = "";
+    } else {
+      const { index } = firstMatch;
+      const { length } = firstContent;
+      preContent += firstContent.substring(0, index);
+      firstContent = firstContent.substring(index + 1, length);
+    }
   }
 
   // if (firstLineWithContentNonContent.charAt(0) === "{") {
@@ -62,10 +68,13 @@ const getContent = (contentLines: Array<string>) => {
   //   openingContent + firstLineWithContentNonContent;
 
   return {
-    firstContentLineIndex,
-    contentLinesBeforeContent,
+    linesBeforeContent,
+    firstContentLine,
+    contentIndex,
+    // firstContentLineIndex,
+    // contentLinesBeforeContent,
     // firstLineWithContentNonContent,
-    beforeContent,
+    preContent,
     firstContent,
   };
 };
@@ -80,40 +89,42 @@ export const loadFile = (content: string, filePathName: string) => {
   const contentLines = content.split("\n");
 
   const {
-    firstContentLineIndex,
-    contentLinesBeforeContent,
+    // firstContentLine,
+    linesBeforeContent,
+    contentIndex,
+    // firstContentLineIndex,
+    // contentLinesBeforeContent,
     // firstLineWithContentNonContent,
     // firstLineOfContent,
-    beforeContent,
+    preContent,
     firstContent,
   } = getContent(contentLines);
 
   // ** Set the colours for this file.
-  const colourLine = contentLinesBeforeContent.find((x) =>
-    x.includes("\\colortbl")
-  );
+  const colourLine = linesBeforeContent.find((x) => x.includes("\\colortbl"));
   listStore.colours = resolveColours(colourLine);
 
+  // ** Here we resolve certain aspects of the styling of the file
+  // ** such as font size and line height.
+  const managedPreContent = resolvefirstContent(preContent);
   // ** Save the content for later; when we put it back together to save the file.
-  listStore.contentFromFile = [
-    ...contentLinesBeforeContent,
-    resolvefirstContent(beforeContent),
-  ];
+  listStore.contentFromFile = [...linesBeforeContent, managedPreContent];
 
   const lines: Array<string> = [];
 
   // ** Check if the content is empty.
-  if (firstContent !== "") {
-    lines.push(firstContent.substring(firstContent.indexOf(" ") + 1));
-  }
-  // ** We need to have at least one line, even if its an empty string.
-  else {
-    lines.push("");
-  }
+  lines.push(firstContent);
+  // if (firstContent !== "") {
+  //   lines.push(firstContent.substring(firstContent.indexOf(" ") + 1));
+  // }
+  // // ** We need to have at least one line, even if its an empty string.
+  // else {
+  //   lines.push("");
+  // }
 
   {
     // ** Extract the content lines.
-    let i = firstContentLineIndex + 1;
+    let i = contentIndex + 1;
     while (i < contentLines.length - 2) {
       const line = contentLines[i];
       lines.push(line);
@@ -121,7 +132,9 @@ export const loadFile = (content: string, filePathName: string) => {
     }
   }
 
+  console.log("Bag: ", lines, firstContent, contentIndex);
+
   listStore.lines = resovleLoadContent(lines);
 
-  refresh(listStore);
+  refresh(appStore);
 };

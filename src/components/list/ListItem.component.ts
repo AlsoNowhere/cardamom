@@ -8,8 +8,6 @@ import {
   refresh,
 } from "mint";
 
-import { wait } from "sage";
-
 import { Button, Field, TField } from "thyme";
 
 import { addLine } from "../../logic/add-line.logic";
@@ -18,15 +16,17 @@ import { inputKeyDown } from "../../logic/input-keydown.logic";
 
 import { listStore } from "../../stores/list.store";
 import { optionsStore } from "../../stores/options.store";
+import { togglesStore } from "../../stores/toggles.store";
+
 import { options } from "../../data/options.data";
 
 const inputChange: MintEvent<HTMLInputElement> = function (_, element) {
   listStore.lines[this.index].content = element.value;
 };
 
-const inputFocus = async function () {
-  await wait();
+const inputFocus = function () {
   listStore.currentIndex = this.index;
+  listStore.lastCurrentIndex = this.index;
 
   if (listStore.lines[this.index].styles["font-weight"] === "bold") {
     options[0].theme = "blueberry";
@@ -49,15 +49,14 @@ const inputFocus = async function () {
   refresh(optionsStore);
 };
 
-const inputBlur = async () => {
-  await wait();
-
-  if (!optionsStore.optionsElementRef.contains(document.activeElement)) {
-    listStore.currentIndex = null;
-  }
+const inputBlur = () => {
+  listStore.currentIndex = null;
 
   options[0].theme = undefined;
-  refresh(optionsStore);
+  options[1].theme = undefined;
+  options[2].theme = undefined;
+
+  refresh(togglesStore);
 };
 
 class ListItemComponent extends MintScope {

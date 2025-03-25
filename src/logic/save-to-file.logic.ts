@@ -2,7 +2,7 @@ import { resolveSaveContent } from "./resolve-content.logic";
 
 import { listStore } from "../stores/list.store";
 
-const endOfFileContent = "}\r" + "\n" + "\u0000";
+const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
 
 const resolveFirstContentLine = (line: string, appContent: string) => {
   // ** Remove an unneeded line break that might be added.
@@ -76,17 +76,34 @@ export const saveToFile = () => {
     listStore.contentFromFile.splice(hasFileColoursIndex, 1);
   }
 
-  const contentLinesBeforeContent = listStore.contentFromFile
-    .slice(0, -1)
-    .join("\n");
+  // const contentLinesBeforeContent = listStore.contentFromFile
+  //   .slice(0, -1)
+  //   .join("\n");
 
-  const firstLineWithContent = resolveFirstContentLine(
-    listStore.contentFromFile.at(-1),
-    appContent
-  );
+  console.log("Clolours: ", coloursLine);
+
+  const _contentLinesBeforeContent = [
+    "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
+    "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
+    "\\pard\\sl240\\slmult1\\f0\\fs22\\lang9\\par",
+  ];
+
+  if (coloursLine !== undefined) {
+    _contentLinesBeforeContent.splice(1, 0, coloursLine);
+  }
+
+  const contentLinesBeforeContent = _contentLinesBeforeContent.join("\n");
+
+  // const firstLineWithContent = resolveFirstContentLine(
+  //   listStore.contentFromFile.at(-1),
+  //   appContent
+  // );
+
+  // const content =
+  //   contentLinesBeforeContent + firstLineWithContent + endOfFileContent;
 
   const content =
-    contentLinesBeforeContent + firstLineWithContent + endOfFileContent;
+    contentLinesBeforeContent + " " + appContent + endOfFileContent;
 
   console.log(content);
 
@@ -94,5 +111,5 @@ export const saveToFile = () => {
     detail: { content, filePathName: listStore.filePathName },
   });
 
-  window.dispatchEvent(saveToFile);
+  // window.dispatchEvent(saveToFile);
 };
