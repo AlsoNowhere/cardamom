@@ -3,11 +3,11 @@ import { refresh } from "mint";
 import { listStore } from "../../stores/list.store";
 
 export const changeStyle = (style: string, value: string, toggle = false) => {
-  const { currentIndex, lines, listElementRef } = listStore;
+  const { lastCurrentIndex, lines, listElementRef } = listStore;
 
-  if (currentIndex === null) return;
+  if (lastCurrentIndex === null) return;
 
-  const { styles } = lines[currentIndex];
+  const { styles } = lines[lastCurrentIndex];
 
   if (toggle) {
     if (!!styles[style]) {
@@ -21,5 +21,5 @@ export const changeStyle = (style: string, value: string, toggle = false) => {
 
   refresh(listStore);
 
-  listElementRef.children[currentIndex].querySelector("input").focus();
+  listElementRef.children[lastCurrentIndex].querySelector("input").focus();
 };

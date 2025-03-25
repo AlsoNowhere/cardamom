@@ -5,9 +5,13 @@ import { Controls } from "./tool-bars/Controls.component";
 import { Options } from "./tool-bars/Options.component";
 import { List } from "./list/List.component";
 
+import { appStore } from "../stores/app.store";
+
 class AppComponent extends MintScope {
   constructor() {
     super();
+
+    appStore.connect(this);
   }
 }
 

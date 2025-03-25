@@ -1,8 +1,7 @@
 import { node } from "mint";
 
-import { changeColour } from "../logic/change-colour.logic";
-import { fontDown } from "../logic/font-down.logic";
-import { fontUp } from "../logic/font-up.logic";
+// import { fontDown } from "../logic/font-down.logic";
+// import { fontUp } from "../logic/font-up.logic";
 import {
   toggleBold,
   toggleItalic,
@@ -10,8 +9,6 @@ import {
 } from "../logic/options-toggles.logic";
 
 import { Option } from "../models/Option.model";
-
-import { colours } from "./colours.data";
 
 const svgSquare = (colour: string) =>
   node("svg", { viewBox: "0 0 64 64" }, [
@@ -28,15 +25,6 @@ const svgSquare = (colour: string) =>
     }),
   ]);
 
-const colourButtons = colours.map(
-  (x) =>
-    new Option({
-      content: svgSquare(x),
-      title: "Change colour",
-      action: changeColour(x),
-    })
-);
-
 export const options = [
   new Option({
     theme: undefined,
@@ -46,12 +34,14 @@ export const options = [
     action: toggleBold,
   }),
   new Option({
+    theme: undefined,
     label: "I",
     class: "italic",
     title: "Make italic",
     action: toggleItalic,
   }),
   new Option({
+    theme: undefined,
     label: "U",
     class: "underline",
     title: "Make underline",
@@ -63,5 +53,4 @@ export const options = [
   //   title: "Decrease font size",
   //   action: fontDown,
   // }),
-  // ...colourButtons,
 ];
