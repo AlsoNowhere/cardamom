@@ -1,6 +1,15 @@
 export const resolveOther = (content: string) => {
   const firstIsContent = content.charAt(0) !== "\\";
 
+  {
+    const first = content.charAt(0);
+    const last = content.charAt(content.length - 1);
+
+    if (first === `"` && last === `"`) {
+      content = content.substring(1, content.length - 1);
+    }
+  }
+
   content = content
     .split("\\")
     .reduce((a, b, i) => {

@@ -17,14 +17,25 @@ export const resovleLoadContent = (lines: Array<string>) => {
     isItalic: false,
     isUnderline: false,
     setColour: null,
+
+    // reset() {
+    //   this.isBold = false;
+    //   this.isItalic = false;
+    //   this.isUnderline = false;
+    //   this.setColour = null;
+    // },
   };
 
   for (let line of lines) {
-    const styles: Record<string, string> = {};
+    let styles: Record<string, string> = {};
     let content = line;
 
     // ** Paragraph
+    content = content.replace(/\\pard/g, "");
     content = content.replace(/\\par/g, "");
+
+    // ** Line break
+    content = content.replace(/\r/g, " ");
 
     // ** Links
     content = resolveLink(content);
@@ -43,6 +54,16 @@ export const resovleLoadContent = (lines: Array<string>) => {
 
     // ** Other things resolved, like tab indents
     content = resolveOther(content);
+
+    // ** Remove content that is just one space (an output from one of the above).
+    if (content === " ") {
+      content = "";
+    }
+
+    // ** There is no point defining styles on content that is missing.
+    if (content === "") {
+      styles = {};
+    }
 
     output.push(
       new Line({
