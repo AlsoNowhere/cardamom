@@ -3,4 +3,6 @@ export interface IStates {
   isItalic: boolean;
   isUnderline: boolean;
   setColour: null | string;
+
+  // reset: () => void;
 }

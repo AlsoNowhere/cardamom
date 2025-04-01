@@ -563,7 +563,7 @@
   // ** It works by having the content saved when the Component is used in an element().
   // ** This is then replaced with cloned content from the Component definition.
   // ** This saved content can then be used to replace "_children" where it it defined.
-  const getContent$1 = (blueprint) => {
+  const getContent = (blueprint) => {
       const { parentBlueprint, contentFor_children } = blueprint;
       // ** If the content is valid then return this.
       if (contentFor_children !== undefined)
@@ -572,13 +572,13 @@
       if (parentBlueprint === null)
           return;
       // ** We cycle back through until we get valid content.
-      return getContent$1(parentBlueprint);
+      return getContent(parentBlueprint);
   };
   const resolveChildBlueprints = (blueprint, childBlueprints, isSVG) => {
       const { scope, _rootScope } = blueprint;
       // ** Here we get the content that should be used to replace "_children".
       // ** This is pre Blueprint generated rated.
-      const childrenContent = getContent$1(blueprint);
+      const childrenContent = getContent(blueprint);
       if (childrenContent !== undefined) {
           // ** If this is the keyword "_children" then replace this with childrenContent.
           // ** As these are blueprints then they will need to be cloned and unique at the render phase.
@@ -3260,6 +3260,18 @@
       node("div", { mIf: mIf("tabSelected"), class: "tabs__body" }, node(template({ onevery: true }, "currentTemplate"))),
   ]);
 
+  class TableComponent extends MintScope {
+      constructor() {
+          super();
+          this.columns = [];
+          this.rows = [];
+      }
+  }
+  component("table", TableComponent, { class: "table" }, [
+      node("thead", null, node("tr", null, node("th", Object.assign(Object.assign({}, mFor("columns")), { mKey: "id" }), "{title}"))),
+      node("tbody", null, node("tr", Object.assign(Object.assign({}, mFor("rows")), { mKey: "id" }), node("td", Object.assign(Object.assign({}, mFor("columns")), { mKey: "id" }), "{cell}"))),
+  ]);
+
   const size = 8;
   const lineProps = (x1, x2) => ({
       x1,
@@ -3309,20 +3321,6 @@
           output.push(_colour);
       });
       return output;
-  };
-  const resolvefirstContent = (firstLineWithContent) => {
-      const parts = firstLineWithContent.split("\\");
-      const newParts = parts.reduce((a, b) => {
-          if (b.slice(0, 2) === "sa")
-              return a;
-          if (b.slice(0, 2) === "sl" && b.length === 5)
-              a.push("sl240");
-          else {
-              a.push(b);
-          }
-          return a;
-      }, []);
-      return newParts.join("\\");
   };
   const getColours = (colours) => {
       return colours
@@ -3386,9 +3384,7 @@
   }
   const listStore = new ListStore();
 
-  const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
-  const saveToFile = () => {
-      const { appContent, coloursLine } = resolveSaveContent(listStore.lines);
+  const resolveSaveColours = (coloursLine) => {
       const hasFileColoursIndex = listStore.contentFromFile.findIndex((x) => x.includes("\\colortbl"));
       // ** File HAS colours AND colours ARE defined in app.
       if (hasFileColoursIndex !== -1 && coloursLine !== undefined) {
@@ -3402,10 +3398,63 @@
       else if (hasFileColoursIndex !== -1 && coloursLine === undefined) {
           listStore.contentFromFile.splice(hasFileColoursIndex, 1);
       }
+  };
+
+  const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
+  // const resolveFirstContentLine = (line: string, appContent: string) => {
+  //   // ** Remove an unneeded line break that might be added.
+  //   if (line.substring(line.length - 5) === "\\par\r") {
+  //     line = line.substring(0, line.length - 5);
+  //   }
+  //   // ** If there is no appContent then we don't need to add a space in.
+  //   line = appContent === "" ? line + "\n" : line + " " + appContent + "\n";
+  //   {
+  //     const lineStart = line.includes("{")
+  //       ? line.substring(0, line.lastIndexOf("}") + 1)
+  //       : "";
+  //     let lineEnd = line.includes("{")
+  //       ? line.substring(line.lastIndexOf("}") + 1, line.length)
+  //       : line;
+  //     let lineHeightSet = [false, false];
+  //     let fontSizeSet = false;
+  //     lineEnd = lineEnd
+  //       .split("\\")
+  //       .map((x) => {
+  //         if (line.charAt(0) !== "\\" || x.includes(" ")) return x;
+  //         if (x.substring(0, 2) === "sl" && x.length === 5) {
+  //           lineHeightSet[0] = true;
+  //           return "sl240";
+  //         }
+  //         if (x.substring(0, 7) === "slmulti") {
+  //           lineHeightSet[1] = true;
+  //           return x;
+  //         }
+  //         if (x.substring(0, 2) === "fs") {
+  //           fontSizeSet = true;
+  //           return "fs22";
+  //         }
+  //         return x;
+  //       })
+  //       .join("\\");
+  //     if (!lineHeightSet[1]) {
+  //       lineEnd = "\\slmulti" + lineEnd;
+  //     }
+  //     if (!lineHeightSet[0]) {
+  //       lineEnd = "\\sl240" + lineEnd;
+  //     }
+  //     if (!fontSizeSet) {
+  //       lineEnd = "\\fs22" + lineEnd;
+  //     }
+  //     line = lineStart + lineEnd;
+  //   }
+  //   return line;
+  // };
+  const saveToFile = () => {
+      const { appContent, coloursLine } = resolveSaveContent(listStore.lines);
+      resolveSaveColours(coloursLine);
       // const contentLinesBeforeContent = listStore.contentFromFile
       //   .slice(0, -1)
       //   .join("\n");
-      console.log("Clolours: ", coloursLine);
       const _contentLinesBeforeContent = [
           "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
           "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
@@ -3422,11 +3471,11 @@
       // const content =
       //   contentLinesBeforeContent + firstLineWithContent + endOfFileContent;
       const content = contentLinesBeforeContent + " " + appContent + endOfFileContent;
-      console.log(content);
-      new CustomEvent("saveToFile", {
+      // console.log(content);
+      const saveToFile = new CustomEvent("saveToFile", {
           detail: { content, filePathName: listStore.filePathName },
       });
-      // window.dispatchEvent(saveToFile);
+      window.dispatchEvent(saveToFile);
   };
 
   class ControlsStore extends Store {
@@ -4027,16 +4076,19 @@
   };
 
   const resolveLink = (content) => {
-      if (content.includes("HYPERLINK")) {
-          const target = "HYPERLINK ";
-          const slice = content.substring(content.indexOf(target) + target.length, content.length);
-          content = slice.substring(0, slice.indexOf(" "));
-      }
+      content = content.replace(/ HYPERLINK "[a-zA-Z0-9()@:%_\-\+.~#?&=\\\/]+"/g, "");
       return content;
   };
 
   const resolveOther = (content) => {
       const firstIsContent = content.charAt(0) !== "\\";
+      {
+          const first = content.charAt(0);
+          const last = content.charAt(content.length - 1);
+          if (first === `"` && last === `"`) {
+              content = content.substring(1, content.length - 1);
+          }
+      }
       content = content
           .split("\\")
           .reduce((a, b, i) => {
@@ -4067,12 +4119,21 @@
           isItalic: false,
           isUnderline: false,
           setColour: null,
+          // reset() {
+          //   this.isBold = false;
+          //   this.isItalic = false;
+          //   this.isUnderline = false;
+          //   this.setColour = null;
+          // },
       };
       for (let line of lines) {
-          const styles = {};
+          let styles = {};
           let content = line;
           // ** Paragraph
+          content = content.replace(/\\pard/g, "");
           content = content.replace(/\\par/g, "");
+          // ** Line break
+          content = content.replace(/\r/g, " ");
           // ** Links
           content = resolveLink(content);
           // ** Bold
@@ -4085,6 +4146,14 @@
           content = resolveColours(states, content, styles);
           // ** Other things resolved, like tab indents
           content = resolveOther(content);
+          // ** Remove content that is just one space (an output from one of the above).
+          if (content === " ") {
+              content = "";
+          }
+          // ** There is no point defining styles on content that is missing.
+          if (content === "") {
+              styles = {};
+          }
           output.push(new Line({
               content,
               styles,
@@ -4093,96 +4162,134 @@
       return output;
   };
 
-  const getContent = (contentLines) => {
-      // ** The first line of content will be the first line to have "\par in".
-      // const firstContentLineIndex = contentLines.findIndex((x) =>
-      //   x.includes("\\par")
-      // );
-      // ** This means the lines from the start until here are non content lines.
-      // const contentLinesBeforeContent = contentLines.slice(
-      //   0,
-      //   firstContentLineIndex
-      // );
-      const firstContentLine = contentLines.find((x) => x.includes("\\par"));
-      const contentIndex = contentLines.indexOf(firstContentLine);
-      const linesBeforeContent = contentLines.slice(0, contentIndex);
-      // const firstLineWithContent = contentLines[firstContentLineIndex];
-      let preContent = "";
-      // let openingContent = "";
-      let firstContent = "";
-      const index = firstContentLine.includes("{")
-          ? firstContentLine.lastIndexOf("}") + 1
-          : 0;
-      const { length } = firstContentLine;
-      preContent += firstContentLine.substring(0, index);
-      firstContent = firstContentLine.substring(index, length);
-      {
-          const [firstMatch] = [...firstContent.matchAll(/\s[^\\]/g)];
-          if (firstMatch === undefined) {
-              firstContent = "";
-          }
-          else {
-              const { index } = firstMatch;
-              const { length } = firstContent;
-              preContent += firstContent.substring(0, index);
-              firstContent = firstContent.substring(index + 1, length);
-          }
+  /*
+  const getContent = (contentLines: Array<string>) => {
+    // ** The first line of content will be the first line to have "\par in".
+    // const firstContentLineIndex = contentLines.findIndex((x) =>
+    //   x.includes("\\par")
+    // );
+    // ** This means the lines from the start until here are non content lines.
+    // const contentLinesBeforeContent = contentLines.slice(
+    //   0,
+    //   firstContentLineIndex
+    // );
+
+    const firstContentLine = contentLines.find((x) => x.includes("\\par"));
+    const contentIndex = contentLines.indexOf(firstContentLine);
+    const linesBeforeContent = contentLines.slice(0, contentIndex);
+
+    // const firstLineWithContent = contentLines[firstContentLineIndex];
+    let preContent = "";
+    // let openingContent = "";
+    let firstContent = "";
+
+    const index = firstContentLine.includes("{")
+      ? firstContentLine.lastIndexOf("}") + 1
+      : 0;
+    const { length } = firstContentLine;
+    preContent += firstContentLine.substring(0, index);
+    firstContent = firstContentLine.substring(index, length);
+
+    {
+      const [firstMatch] = [...firstContent.matchAll(/\s[^\\]/g)];
+      if (firstMatch === undefined) {
+        firstContent = "";
+      } else {
+        const { index } = firstMatch;
+        const { length } = firstContent;
+        preContent += firstContent.substring(0, index);
+        firstContent = firstContent.substring(index + 1, length);
       }
-      // if (firstLineWithContentNonContent.charAt(0) === "{") {
-      //   const index = firstLineWithContentNonContent.indexOf("}") + 1;
-      //   openingContent = firstLineWithContentNonContent.substring(0, index);
-      //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
-      //     index,
-      //     firstLineWithContentNonContent.length
-      //   );
-      // }
-      // if (firstLineWithContentNonContent.includes(" ")) {
-      //   const index = firstLineWithContentNonContent.indexOf(" ");
-      //   firstContent = firstLineWithContentNonContent.substring(
-      //     index + 1,
-      //     firstLineWithContentNonContent.length
-      //   );
-      //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
-      //     0,
-      //     index
-      //   );
-      // }
-      // firstLineWithContentNonContent =
-      //   openingContent + firstLineWithContentNonContent;
-      return {
-          linesBeforeContent,
-          firstContentLine,
-          contentIndex,
-          // firstContentLineIndex,
-          // contentLinesBeforeContent,
-          // firstLineWithContentNonContent,
-          preContent,
-          firstContent,
-      };
-  };
-  const loadFile = (content, filePathName) => {
-      // ** Set the file name on the store so we have it for later (when saving or editing).
-      listStore.filePathName = filePathName;
-      console.log(content);
-      // ** Parsed the rich text file
-      const contentLines = content.split("\n");
-      const { 
-      // firstContentLine,
-      linesBeforeContent, contentIndex, 
+    }
+
+    // if (firstLineWithContentNonContent.charAt(0) === "{") {
+    //   const index = firstLineWithContentNonContent.indexOf("}") + 1;
+    //   openingContent = firstLineWithContentNonContent.substring(0, index);
+    //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
+    //     index,
+    //     firstLineWithContentNonContent.length
+    //   );
+    // }
+    // if (firstLineWithContentNonContent.includes(" ")) {
+    //   const index = firstLineWithContentNonContent.indexOf(" ");
+    //   firstContent = firstLineWithContentNonContent.substring(
+    //     index + 1,
+    //     firstLineWithContentNonContent.length
+    //   );
+    //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
+    //     0,
+    //     index
+    //   );
+    // }
+    // firstLineWithContentNonContent =
+    //   openingContent + firstLineWithContentNonContent;
+
+    // console.log("Contente: ", preContent, "|", firstContent);
+
+    return {
+      linesBeforeContent,
+      firstContentLine,
+      contentIndex,
       // firstContentLineIndex,
       // contentLinesBeforeContent,
       // firstLineWithContentNonContent,
-      // firstLineOfContent,
-      preContent, firstContent, } = getContent(contentLines);
-      // ** Set the colours for this file.
-      const colourLine = linesBeforeContent.find((x) => x.includes("\\colortbl"));
-      listStore.colours = resolveColours$1(colourLine);
+      preContent,
+      firstContent,
+    };
+  };
+  */
+  const loadFile = (content, filePathName) => {
+      // ** Set the file name on the store so we have it for later (when saving or editing).
+      listStore.filePathName = filePathName;
+      /*
+      // console.log(content);
+    
+      // content = content.replace(/{[^{}]*}/g, (x) => x.replace(/\n/g, " "));
+    
+      // const mats = [...content.matchAll(/{[^{}]*}/g)];
+      // console.log("MAts: ", mats);
+    
+      // ** Parsed the rich text file
+      const contentLines = content.split("\n");
+    
+      const {
+        // firstContentLine,
+        linesBeforeContent,
+        contentIndex,
+        // firstContentLineIndex,
+        // contentLinesBeforeContent,
+        // firstLineWithContentNonContent,
+        // firstLineOfContent,
+        preContent,
+        firstContent,
+      } = getContent(contentLines);
+    
+      let completeContent = [
+        firstContent,
+        ...contentLines.slice(contentIndex),
+      ].join("\n");
+      // console.log(contentLines.slice(contentIndex));
+    
+      completeContent = completeContent.replace(/{[^{}]*}/g, (x) => {
+        // x.replace(/\n/g, " ")
+        const str = x.substring(1, x.length - 1);
+        console.log("Each: ", str);
+        return str;
+      });
+      // console.log(completeContent);
+    
+      const contentLines2 = completeContent.split("\n");
+    
+    
+    
       // ** Here we resolve certain aspects of the styling of the file
       // ** such as font size and line height.
       const managedPreContent = resolvefirstContent(preContent);
       // ** Save the content for later; when we put it back together to save the file.
       listStore.contentFromFile = [...linesBeforeContent, managedPreContent];
-      const lines = [];
+    
+      const lines: Array<string> = [];
+    
       // ** Check if the content is empty.
       lines.push(firstContent);
       // if (firstContent !== "") {
@@ -4192,16 +4299,64 @@
       // else {
       //   lines.push("");
       // }
+    
       {
-          // ** Extract the content lines.
-          let i = contentIndex + 1;
-          while (i < contentLines.length - 2) {
-              const line = contentLines[i];
-              lines.push(line);
-              i++;
+        // ** Extract the content lines.
+        let i = contentIndex + 1;
+        while (i < contentLines2.length - 2) {
+          const line = contentLines2[i];
+          lines.push(line);
+          i++;
+        }
+      }
+        */
+      // content = content
+      //   .substring(content.indexOf("\\par"), content.length - 1)
+      //   .replace(/{[^{}]*}/g, (x) => {
+      //     x = x.replace(/\n/g, " ");
+      //     const str = x.substring(1, x.length - 1);
+      //     // console.log("Each: ", str);
+      //     return str;
+      //   });
+      listStore.contentFromFile = content
+          .substring(0, content.indexOf("\\par"))
+          .split("\n");
+      let resolvedContent = "";
+      {
+          const mainContent = content
+              .substring(content.indexOf("\\par"), content.length - 1)
+              .split("");
+          // let targetContent = null;
+          // let braceDepths = [];
+          for (let [index, char] of mainContent.entries()) {
+              // if (char === "{") {
+              //   braceDepths.push(index);
+              // } else if (char === "}") {
+              //   targetContent = mainContent.substring(braceDepths.pop(), index + 1);
+              // } else if (braceDepths.length === 0) {
+              //   resolvedContent += char;
+              // }
+              // if (targetContent !== null) {
+              //   console.log("Each: ", targetContent);
+              //   targetContent = targetContent.replace(/\n/g, " ");
+              //   const str = targetContent.substring(1, targetContent.length - 1);
+              //   console.log("Str: ", str);
+              //   resolvedContent += str;
+              //   targetContent = null;
+              // }
+              if ((char === "{" || char === "}") && mainContent[index - 1] !== "\\") {
+                  continue;
+              }
+              resolvedContent += char;
           }
       }
-      console.log("Bag: ", lines, firstContent, contentIndex);
+      // console.log(resolvedContent);
+      const contentLines = resolvedContent.split("\n");
+      // ** Set the colours for this file.
+      const colourLine = contentLines.find((x) => x.includes("\\colortbl"));
+      listStore.colours = resolveColours$1(colourLine);
+      const lines = contentLines;
+      // console.log("Lines: ", lines);
       listStore.lines = resovleLoadContent(lines);
       externalRefresh(appStore);
   };
