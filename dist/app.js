@@ -2833,7 +2833,6 @@
               "purple",
           ];
           this.toggleShowColours = function () {
-              console.log("Click: ", this.colourSelectorScope.showColours);
               this.colourSelectorScope.showColours =
                   !this.colourSelectorScope.showColours;
               externalRefresh(this.colourSelectorScope);
@@ -3840,6 +3839,27 @@
 
   const inputKeyDown = function (event) {
       const { key } = event;
+      if (key === "Backspace" && listStore.currentIndex !== null) {
+          const { lines, currentIndex } = listStore;
+          const line = listStore.lines[listStore.currentIndex];
+          const { content } = line;
+          // ** Only if there is no content.
+          if (content === "") {
+              // ** We want at least one line left.
+              if (lines.length !== 1) {
+                  lines.splice(currentIndex, 1);
+                  // Update index to the previous item, only if we're not at the first already.
+                  if (currentIndex !== 0) {
+                      listStore.currentIndex = currentIndex - 1;
+                      const element = listStore.listElementRef.children[listStore.currentIndex];
+                      const inputElement = element.querySelector("input");
+                      inputElement.focus();
+                  }
+                  externalRefresh(listStore);
+                  event.preventDefault();
+              }
+          }
+      }
       if (key === "Enter") {
           addLine.apply(this);
           const element = listStore.listElementRef.children[this.index + 1];
@@ -3941,14 +3961,21 @@
               "[index]": "index",
           },
       }),
-      div(Object.assign(Object.assign({}, mFor("buttons")), { mKey: "_i", class: "list-item__button list-item__button--{class}" }), node(Button, {
-          "[theme]": "theme",
-          "[icon]": "icon",
-          "[label]": "label",
-          square: true,
-          "[onClick]": "action",
-          "[index]": "index",
-      })),
+      // div(
+      //   {
+      //     ...mFor("buttons"),
+      //     mKey: "_i",
+      //     class: "list-item__button list-item__button--{class}",
+      //   },
+      //   node(Button, {
+      //     "[theme]": "theme",
+      //     "[icon]": "icon",
+      //     "[label]": "label",
+      //     square: true,
+      //     "[onClick]": "action",
+      //     "[index]": "index",
+      //   })
+      // ),
   ]);
 
   class ListComponent extends MintScope {
