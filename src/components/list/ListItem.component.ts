@@ -107,19 +107,19 @@ export const ListItem = component("div", ListItemComponent, {}, [
     },
   }),
 
-  div(
-    {
-      ...mFor("buttons"),
-      mKey: "_i",
-      class: "list-item__button list-item__button--{class}",
-    },
-    node(Button, {
-      "[theme]": "theme",
-      "[icon]": "icon",
-      "[label]": "label",
-      square: true,
-      "[onClick]": "action",
-      "[index]": "index",
-    })
-  ),
+  // div(
+  //   {
+  //     ...mFor("buttons"),
+  //     mKey: "_i",
+  //     class: "list-item__button list-item__button--{class}",
+  //   },
+  //   node(Button, {
+  //     "[theme]": "theme",
+  //     "[icon]": "icon",
+  //     "[label]": "label",
+  //     square: true,
+  //     "[onClick]": "action",
+  //     "[index]": "index",
+  //   })
+  // ),
 ]);
