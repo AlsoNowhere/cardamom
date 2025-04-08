@@ -1,7 +1,22 @@
 main {
-  width: calc(100% - 3rem);
+  width: calc(100% - 2rem);
   height: 100%;
-  margin-left: 3rem;
+  margin-left: 2rem;
+  padding: 2rem;
   .smoke-light-bg;
   overflow-y: auto;
+}
+
+.main {
+  &__controls {
+    position: fixed;
+  }
+
+  &__list {
+    .card;
+    height: calc(100% - 120px);
+    margin-top: 120px;
+    background-color: @snow;
+    overflow-y: auto;
+  }
 }

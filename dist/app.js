@@ -3985,7 +3985,7 @@
       }
   }
   const List = component("div", ListComponent, {}, [
-      node("form", { class: "card snow-bg", "(submit)": "doNothing" }, node("ul", Object.assign({ class: "list" }, mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
+      node("form", { "(submit)": "doNothing" }, node("ul", Object.assign({ class: "list" }, mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
           node(ListItem, {
               "[content]": "content",
               "[style]": "getStyles",
@@ -4417,10 +4417,9 @@
   }
   const App = component("<>", AppComponent, {}, [
       node(Aside),
-      node("main", { class: "padding-large" }, [
-          node(Controls),
-          node(Options),
-          node(List),
+      node("main", null, [
+          div({ class: "main__controls" }, [node(Controls), node(Options)]),
+          div({ class: "main__list" }, node(List)),
       ]),
   ]);
 

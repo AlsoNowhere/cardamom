@@ -2345,10 +2345,24 @@ code {
   clip: auto;
 }
 main {
-  width: calc(100% - 3rem);
+  width: calc(100% - 2rem);
   height: 100%;
-  margin-left: 3rem;
+  margin-left: 2rem;
+  padding: 2rem;
   background-color: #eaeaea;
+  overflow-y: auto;
+}
+.main__controls {
+  position: fixed;
+}
+.main__list {
+  position: relative;
+  padding: 1rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  height: calc(100% - 120px);
+  margin-top: 120px;
+  background-color: #fff;
   overflow-y: auto;
 }
 .aside {
