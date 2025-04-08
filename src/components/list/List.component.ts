@@ -15,7 +15,7 @@ class ListComponent extends MintScope {
 export const List = component("div", ListComponent, {}, [
   node(
     "form",
-    { class: "card snow-bg", "(submit)": "doNothing" },
+    { "(submit)": "doNothing" },
     node(
       "ul",
       { class: "list", ...mRef("listElementRef") },
