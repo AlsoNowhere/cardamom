@@ -3375,6 +3375,9 @@
               lastCurrentIndex: null,
               colours: {},
               listElementRef: null,
+              textareaContent: new Resolver(() => {
+                  return listStore.lines.map((x) => x.content).join("\n");
+              }),
               doNothing(event) {
                   event.preventDefault();
               },
@@ -3477,187 +3480,6 @@
       window.dispatchEvent(saveToFile);
   };
 
-  class ControlsStore extends Store {
-      constructor() {
-          super({
-              hasFileLoaded: new Resolver(() => listStore.filePathName !== null),
-              filePathName: new Resolver(() => listStore.filePathName.split("\\").pop().split(".").shift()),
-              doNothing: (event) => event.preventDefault(),
-              updateFileName: (_, element) => {
-                  const filePath = listStore.filePathName
-                      .split("\\")
-                      .slice(0, -1)
-                      .join("\\");
-                  const newValue = filePath + "\\" + element.value + ".rtf";
-                  listStore.filePathName = newValue;
-              },
-              openFile: () => {
-                  window.dispatchEvent(new Event("loadFromFile"));
-              },
-              saveToFile: () => {
-                  saveToFile();
-              },
-          });
-      }
-  }
-  const controlsStore = new ControlsStore();
-
-  class ControlsComponent extends MintScope {
-      constructor() {
-          super();
-          controlsStore.connect(this);
-      }
-  }
-  const Controls = component("section", ControlsComponent, { class: "margin-bottom-small" }, [
-      node("form", Object.assign(Object.assign({}, mIf("hasFileLoaded")), { class: "margin-bottom-small", "(submit)": "doNothing" }), node(Field, { "[value]": "filePathName", "[onInput]": "updateFileName" })),
-      div([
-          node(Button, {
-              icon: "download",
-              class: "margin-right-small",
-              square: true,
-              "[onClick]": "openFile",
-          }),
-          node(Button, {
-              theme: "blueberry",
-              icon: "floppy-o",
-              square: true,
-              "[onClick]": "saveToFile",
-          }),
-      ]),
-  ]);
-
-  const changeStyle = (style, value, toggle = false) => {
-      const { lastCurrentIndex, lines, listElementRef } = listStore;
-      if (lastCurrentIndex === null)
-          return;
-      const { styles } = lines[lastCurrentIndex];
-      if (toggle) {
-          if (!!styles[style]) {
-              delete styles[style];
-          }
-          else {
-              styles[style] = value;
-          }
-      }
-      else {
-          styles[style] = value;
-      }
-      externalRefresh(listStore);
-      listElementRef.children[lastCurrentIndex].querySelector("input").focus();
-  };
-
-  const toggleBold = () => {
-      changeStyle("font-weight", "bold", true);
-  };
-  const toggleItalic = () => {
-      changeStyle("font-style", "italic", true);
-  };
-  const toggleUnderline = () => {
-      changeStyle("text-decoration", "underline", true);
-  };
-
-  class Option {
-      constructor(args) {
-          const { theme, icon, label, title, content, action } = args;
-          if (theme) {
-              this.theme = theme;
-          }
-          if (icon) {
-              this.icon = icon;
-          }
-          if (label) {
-              this.label = label;
-          }
-          if (args.class) {
-              this.class = `${args.class} margin-right-small`;
-          }
-          else {
-              this.class = "margin-right-small margin-bottom-small";
-          }
-          this.title = title;
-          if (content) {
-              this.content = content;
-          }
-          this.action = action;
-      }
-  }
-
-  const options = [
-      new Option({
-          theme: undefined,
-          label: "B",
-          class: "bold",
-          title: "Make bold",
-          action: toggleBold,
-      }),
-      new Option({
-          theme: undefined,
-          label: "I",
-          class: "italic",
-          title: "Make italic",
-          action: toggleItalic,
-      }),
-      new Option({
-          theme: undefined,
-          label: "U",
-          class: "underline",
-          title: "Make underline",
-          action: toggleUnderline,
-      }),
-      // new Option({ icon: "level-up", title: "Increase font size", action: fontUp }),
-      // new Option({
-      //   icon: "level-down",
-      //   title: "Decrease font size",
-      //   action: fontDown,
-      // }),
-  ];
-
-  const chooseColour = (colour) => {
-      changeStyle("color", colour);
-  };
-  class OptionsStore extends Store {
-      constructor() {
-          super({
-              isBoldy: true,
-              options,
-              chooseColour,
-              optionsElementRef: null,
-          });
-      }
-  }
-  const optionsStore = new OptionsStore();
-
-  class TogglesStore extends Store {
-      constructor() {
-          super({});
-      }
-  }
-  const togglesStore = new TogglesStore();
-
-  class TogglesComponent extends MintScope {
-      constructor() {
-          super();
-          togglesStore.connect(this);
-      }
-  }
-  const Toggles = component("<>", TogglesComponent, null, node(Button, Object.assign(Object.assign({}, mFor("options")), { mKey: "_i", "[theme]": "theme", square: true, "[content]": "content", "[onClick]": "action" })));
-  class OptionsComponent extends MintScope {
-      constructor() {
-          super();
-          optionsStore.connect(this);
-      }
-  }
-  const Options = component("section", OptionsComponent, Object.assign(Object.assign({}, mRef("optionsElementRef")), { class: "margin-bottom-small" }), node("ul", { class: "list flex" }, [
-      node(Toggles, { "[options]": "options" }),
-      node(ColourSelector, { "[onInput]": "chooseColour" }),
-  ]));
-
-  const wait = (time = 0) => new Promise((resolve) => {
-      setTimeout(() => {
-          resolve();
-      }, time);
-  });
-
   /******************************************************************************
   Copyright (c) Microsoft Corporation.
 
@@ -3688,12 +3510,48 @@
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
   };
 
+  const wait = (time = 0) => new Promise((resolve) => {
+      setTimeout(() => {
+          resolve();
+      }, time);
+  });
+
+  /******************************************************************************
+  Copyright (c) Microsoft Corporation.
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+  ***************************************************************************** */
+
+  function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  }
+
+  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+  };
+
   const time = 300;
   const timeToWait = 3000;
 
   class Toaster {
       constructor(target = document.body) {
-          this.toast = (message, options, alternateElementTarget) => __awaiter$1(this, void 0, void 0, function* () {
+          this.toast = (message, options, alternateElementTarget) => __awaiter(this, void 0, void 0, function* () {
               var _a;
               const _previousTarget = this.target;
               if (alternateElementTarget !== undefined) {
@@ -3716,7 +3574,7 @@
                   buttonSpan.classList.add("fa", "fa-times");
                   toastMessageButton.append(buttonSpan);
               }
-              const remove = () => __awaiter$1(this, void 0, void 0, function* () {
+              const remove = () => __awaiter(this, void 0, void 0, function* () {
                   var _b, _c;
                   delete toast.remove;
                   if (clickToClose === true) {
@@ -3801,227 +3659,8 @@
           .join("; ");
   };
 
-  const lineId = { index: 0 };
-
-  class Line {
-      constructor({ content = "", styles: styles$1 = {}, id, } = {
-          content: "",
-      }) {
-          this.content = content;
-          this.styles = styles$1;
-          if (id !== undefined) {
-              this.id = id;
-          }
-          else {
-              this.id = ++lineId.index;
-          }
-          this.getStyles = () => {
-              return styles(Object.assign({}, this.styles));
-          };
-      }
-  }
-
-  const addLine = function () {
-      listStore.lines.splice(this.index + 1, 0, new Line());
-      externalRefresh(listStore);
-  };
-
-  const deleteLine = function () {
-      if (listStore.lines.length === 1)
-          return;
-      listStore.lines.splice(this.index, 1);
-      externalRefresh(listStore);
-  };
-
   const keysHeld = {
       Control: false,
-  };
-
-  const inputKeyDown = function (event) {
-      const { key } = event;
-      if (key === "Backspace" && listStore.currentIndex !== null) {
-          const { lines, currentIndex } = listStore;
-          const line = listStore.lines[listStore.currentIndex];
-          const { content } = line;
-          // ** Only if there is no content.
-          if (content === "") {
-              // ** We want at least one line left.
-              if (lines.length !== 1) {
-                  lines.splice(currentIndex, 1);
-                  // Update index to the previous item, only if we're not at the first already.
-                  if (currentIndex !== 0) {
-                      listStore.currentIndex = currentIndex - 1;
-                      const element = listStore.listElementRef.children[listStore.currentIndex];
-                      const inputElement = element.querySelector("input");
-                      inputElement.focus();
-                  }
-                  externalRefresh(listStore);
-                  event.preventDefault();
-              }
-          }
-      }
-      if (key === "Enter") {
-          addLine.apply(this);
-          const element = listStore.listElementRef.children[this.index + 1];
-          const inputElement = element.querySelector("input");
-          inputElement.focus();
-      }
-      if (key === "Delete" && keysHeld.Control) {
-          deleteLine.apply(this);
-          const element = listStore.listElementRef.children[this.index];
-          if (!!element) {
-              const inputElement = element.querySelector("input");
-              inputElement.focus();
-          }
-      }
-      if (key === "ArrowUp") {
-          if (this.index !== 0) {
-              const element = listStore.listElementRef.children[this.index - 1];
-              const inputElement = element.querySelector("input");
-              inputElement.focus();
-          }
-      }
-      if (key === "ArrowDown") {
-          if (this.index !== listStore.lines.length - 1) {
-              const element = listStore.listElementRef.children[this.index + 1];
-              const inputElement = element.querySelector("input");
-              inputElement.focus();
-          }
-      }
-      if (key === "b" && keysHeld.Control) {
-          toggleBold();
-      }
-      if (key === "i" && keysHeld.Control) {
-          toggleItalic();
-      }
-      if (key === "u" && keysHeld.Control) {
-          event.preventDefault();
-          toggleUnderline();
-      }
-  };
-
-  const inputChange = function (_, element) {
-      listStore.lines[this.index].content = element.value;
-  };
-  const inputFocus = function () {
-      listStore.currentIndex = this.index;
-      listStore.lastCurrentIndex = this.index;
-      if (listStore.lines[this.index].styles["font-weight"] === "bold") {
-          options[0].theme = "blueberry";
-      }
-      else {
-          options[0].theme = undefined;
-      }
-      if (listStore.lines[this.index].styles["font-style"] === "italic") {
-          options[1].theme = "blueberry";
-      }
-      else {
-          options[1].theme = undefined;
-      }
-      if (listStore.lines[this.index].styles["text-decoration"] === "underline") {
-          options[2].theme = "blueberry";
-      }
-      else {
-          options[2].theme = undefined;
-      }
-      externalRefresh(optionsStore);
-  };
-  const inputBlur = () => {
-      listStore.currentIndex = null;
-      options[0].theme = undefined;
-      options[1].theme = undefined;
-      options[2].theme = undefined;
-      externalRefresh(togglesStore);
-  };
-  class ListItemComponent extends MintScope {
-      constructor() {
-          super();
-          this.buttons = [
-              { theme: "snow", icon: "level-down", class: "add", action: addLine },
-              { theme: "tomato", icon: "trash-o", class: "delete", action: deleteLine },
-          ];
-          this.inputKeyDown = inputKeyDown;
-          this.inputChange = inputChange;
-          this.inputFocus = inputFocus;
-          this.inputBlur = inputBlur;
-          this.addLine = addLine;
-          this.deleteLine = deleteLine;
-      }
-  }
-  const ListItem = component("div", ListItemComponent, {}, [
-      node(Field, {
-          "[value]": "content",
-          "[style]": "style",
-          "[onKeyDown]": "inputKeyDown",
-          "[onInput]": "inputChange",
-          "[onFocus]": "inputFocus",
-          "[onBlur]": "inputBlur",
-          "[index]": "index",
-          extend: {
-              "[index]": "index",
-          },
-      }),
-      // div(
-      //   {
-      //     ...mFor("buttons"),
-      //     mKey: "_i",
-      //     class: "list-item__button list-item__button--{class}",
-      //   },
-      //   node(Button, {
-      //     "[theme]": "theme",
-      //     "[icon]": "icon",
-      //     "[label]": "label",
-      //     square: true,
-      //     "[onClick]": "action",
-      //     "[index]": "index",
-      //   })
-      // ),
-  ]);
-
-  class ListComponent extends MintScope {
-      constructor() {
-          super();
-          listStore.connect(this);
-      }
-  }
-  const List = component("div", ListComponent, {}, [
-      node("form", { "(submit)": "doNothing" }, node("ul", Object.assign({ class: "list" }, mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
-          node(ListItem, {
-              "[content]": "content",
-              "[style]": "getStyles",
-              "[index]": "_i",
-          }),
-      ]))),
-  ]);
-
-  /******************************************************************************
-  Copyright (c) Microsoft Corporation.
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted.
-
-  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-  PERFORMANCE OF THIS SOFTWARE.
-  ***************************************************************************** */
-
-  function __awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  }
-
-  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
   };
 
   const addKeyEvents = () => {
@@ -4138,6 +3777,26 @@
           .join("");
       return content;
   };
+
+  const lineId = { index: 0 };
+
+  class Line {
+      constructor({ content = "", styles: styles$1 = {}, id, } = {
+          content: "",
+      }) {
+          this.content = content;
+          this.styles = styles$1;
+          if (id !== undefined) {
+              this.id = id;
+          }
+          else {
+              this.id = ++lineId.index;
+          }
+          this.getStyles = () => {
+              return styles(Object.assign({}, this.styles));
+          };
+      }
+  }
 
   const resovleLoadContent = (lines) => {
       const output = [];
@@ -4398,7 +4057,9 @@
   class AppStore extends Store {
       constructor() {
           super({
-              oninit: () => __awaiter(this, void 0, void 0, function* () {
+              isTextarea: false,
+              isTextareaOverflow: new Resolver(() => appStore.isTextarea ? "hidden" : "auto"),
+              oninit: () => __awaiter$1(this, void 0, void 0, function* () {
                   addKeyEvents();
                   addLoadFileEvent();
                   yield wait();
@@ -4408,6 +4069,376 @@
       }
   }
   const appStore = new AppStore();
+
+  class ControlsStore extends Store {
+      constructor() {
+          super({
+              hasFileLoaded: new Resolver(() => listStore.filePathName !== null),
+              fileName: new Resolver(() => listStore.filePathName.split("\\").pop().split(".").shift()),
+              fileLocation: new Resolver(() => listStore.filePathName.split("\\").slice(0, -1).join("\\")),
+              isTextareaTheme: new Resolver(() => appStore.isTextarea ? "blueberry" : "snow"),
+              doNothing: (event) => event.preventDefault(),
+              updateFileName: (_, element) => {
+                  const filePath = listStore.filePathName
+                      .split("\\")
+                      .slice(0, -1)
+                      .join("\\");
+                  const newValue = filePath + "\\" + element.value + ".rtf";
+                  listStore.filePathName = newValue;
+              },
+              openFile: () => {
+                  window.dispatchEvent(new Event("loadFromFile"));
+              },
+              saveToFile: () => {
+                  saveToFile();
+              },
+              toggleTextarea() {
+                  appStore.isTextarea = !appStore.isTextarea;
+                  externalRefresh(appStore);
+              },
+          });
+      }
+  }
+  const controlsStore = new ControlsStore();
+
+  class ControlsComponent extends MintScope {
+      constructor() {
+          super();
+          controlsStore.connect(this);
+      }
+  }
+  const Controls = component("section", ControlsComponent, { class: "main__controls-section" }, [
+      node("form", {
+          class: "main__controls-form",
+          "(submit)": "doNothing",
+      }, node("<>", Object.assign({}, mIf("hasFileLoaded")), [
+          node(Field, {
+              "[value]": "fileName",
+              "[onInput]": "updateFileName",
+          }),
+          node("span", { class: "main__controls-location" }, "{fileLocation}"),
+      ])),
+      div([
+          node(Button, {
+              icon: "download",
+              class: "margin-right-small",
+              square: true,
+              "[onClick]": "openFile",
+          }),
+          node(Button, {
+              theme: "blueberry",
+              icon: "floppy-o",
+              class: "margin-right-small",
+              square: true,
+              "[onClick]": "saveToFile",
+          }),
+          node(Button, {
+              "[theme]": "isTextareaTheme",
+              icon: "file-text-o",
+              class: "margin-right-small",
+              square: true,
+              "[onClick]": "toggleTextarea",
+          }),
+      ]),
+  ]);
+
+  const changeStyle = (style, value, toggle = false) => {
+      const { lastCurrentIndex, lines, listElementRef } = listStore;
+      if (lastCurrentIndex === null)
+          return;
+      const { styles } = lines[lastCurrentIndex];
+      if (toggle) {
+          if (!!styles[style]) {
+              delete styles[style];
+          }
+          else {
+              styles[style] = value;
+          }
+      }
+      else {
+          styles[style] = value;
+      }
+      externalRefresh(listStore);
+      listElementRef.children[lastCurrentIndex].querySelector("input").focus();
+  };
+
+  const toggleBold = () => {
+      changeStyle("font-weight", "bold", true);
+  };
+  const toggleItalic = () => {
+      changeStyle("font-style", "italic", true);
+  };
+  const toggleUnderline = () => {
+      changeStyle("text-decoration", "underline", true);
+  };
+
+  class Option {
+      constructor(args) {
+          const { theme, icon, label, title, content, action } = args;
+          if (theme) {
+              this.theme = theme;
+          }
+          if (icon) {
+              this.icon = icon;
+          }
+          if (label) {
+              this.label = label;
+          }
+          if (args.class) {
+              this.class = `${args.class} margin-right-small`;
+          }
+          else {
+              this.class = "margin-right-small margin-bottom-small";
+          }
+          this.title = title;
+          if (content) {
+              this.content = content;
+          }
+          this.action = action;
+      }
+  }
+
+  const options = [
+      new Option({
+          theme: undefined,
+          label: "B",
+          class: "bold",
+          title: "Make bold",
+          action: toggleBold,
+      }),
+      new Option({
+          theme: undefined,
+          label: "I",
+          class: "italic",
+          title: "Make italic",
+          action: toggleItalic,
+      }),
+      new Option({
+          theme: undefined,
+          label: "U",
+          class: "underline",
+          title: "Make underline",
+          action: toggleUnderline,
+      }),
+      // new Option({ icon: "level-up", title: "Increase font size", action: fontUp }),
+      // new Option({
+      //   icon: "level-down",
+      //   title: "Decrease font size",
+      //   action: fontDown,
+      // }),
+  ];
+
+  const chooseColour = (colour) => {
+      changeStyle("color", colour);
+  };
+  class OptionsStore extends Store {
+      constructor() {
+          super({
+              isBoldy: true,
+              options,
+              chooseColour,
+              optionsElementRef: null,
+          });
+      }
+  }
+  const optionsStore = new OptionsStore();
+
+  class TogglesStore extends Store {
+      constructor() {
+          super({});
+      }
+  }
+  const togglesStore = new TogglesStore();
+
+  class TogglesComponent extends MintScope {
+      constructor() {
+          super();
+          togglesStore.connect(this);
+      }
+  }
+  const Toggles = component("<>", TogglesComponent, null, node(Button, Object.assign(Object.assign({}, mFor("options")), { mKey: "_i", "[theme]": "theme", square: true, "[content]": "content", "[onClick]": "action" })));
+  class OptionsComponent extends MintScope {
+      constructor() {
+          super();
+          optionsStore.connect(this);
+      }
+  }
+  const Options = component("section", OptionsComponent, Object.assign(Object.assign({}, mRef("optionsElementRef")), { class: "margin-bottom-small" }), node("ul", { class: "list flex" }, [
+      node(Toggles, { "[options]": "options" }),
+      node(ColourSelector, { "[onInput]": "chooseColour" }),
+  ]));
+
+  const addLine = function () {
+      listStore.lines.splice(this.index + 1, 0, new Line());
+      externalRefresh(listStore);
+  };
+
+  const deleteLine = function () {
+      if (listStore.lines.length === 1)
+          return;
+      listStore.lines.splice(this.index, 1);
+      externalRefresh(listStore);
+  };
+
+  const inputKeyDown = function (event) {
+      const { key } = event;
+      if (key === "Backspace" && listStore.currentIndex !== null) {
+          const { lines, currentIndex } = listStore;
+          const line = listStore.lines[listStore.currentIndex];
+          const { content } = line;
+          // ** Only if there is no content.
+          if (content === "") {
+              // ** We want at least one line left.
+              if (lines.length !== 1) {
+                  lines.splice(currentIndex, 1);
+                  // Update index to the previous item, only if we're not at the first already.
+                  if (currentIndex !== 0) {
+                      listStore.currentIndex = currentIndex - 1;
+                      const element = listStore.listElementRef.children[listStore.currentIndex];
+                      const inputElement = element.querySelector("input");
+                      inputElement.focus();
+                  }
+                  externalRefresh(listStore);
+                  event.preventDefault();
+              }
+          }
+      }
+      if (key === "Enter") {
+          addLine.apply(this);
+          const element = listStore.listElementRef.children[this.index + 1];
+          const inputElement = element.querySelector("input");
+          inputElement.focus();
+      }
+      if (key === "Delete" && keysHeld.Control) {
+          deleteLine.apply(this);
+          const element = listStore.listElementRef.children[this.index];
+          if (!!element) {
+              const inputElement = element.querySelector("input");
+              inputElement.focus();
+          }
+      }
+      if (key === "ArrowUp") {
+          if (this.index !== 0) {
+              const element = listStore.listElementRef.children[this.index - 1];
+              const inputElement = element.querySelector("input");
+              inputElement.focus();
+          }
+      }
+      if (key === "ArrowDown") {
+          if (this.index !== listStore.lines.length - 1) {
+              const element = listStore.listElementRef.children[this.index + 1];
+              const inputElement = element.querySelector("input");
+              inputElement.focus();
+          }
+      }
+      if (key === "b" && keysHeld.Control) {
+          toggleBold();
+      }
+      if (key === "i" && keysHeld.Control) {
+          toggleItalic();
+      }
+      if (key === "u" && keysHeld.Control) {
+          event.preventDefault();
+          toggleUnderline();
+      }
+  };
+
+  const inputChange = function (_, element) {
+      listStore.lines[this.index].content = element.value;
+  };
+  const inputFocus = function () {
+      listStore.currentIndex = this.index;
+      listStore.lastCurrentIndex = this.index;
+      if (listStore.lines[this.index].styles["font-weight"] === "bold") {
+          options[0].theme = "blueberry";
+      }
+      else {
+          options[0].theme = undefined;
+      }
+      if (listStore.lines[this.index].styles["font-style"] === "italic") {
+          options[1].theme = "blueberry";
+      }
+      else {
+          options[1].theme = undefined;
+      }
+      if (listStore.lines[this.index].styles["text-decoration"] === "underline") {
+          options[2].theme = "blueberry";
+      }
+      else {
+          options[2].theme = undefined;
+      }
+      externalRefresh(optionsStore);
+  };
+  const inputBlur = () => {
+      listStore.currentIndex = null;
+      options[0].theme = undefined;
+      options[1].theme = undefined;
+      options[2].theme = undefined;
+      externalRefresh(togglesStore);
+  };
+  class ListItemComponent extends MintScope {
+      constructor() {
+          super();
+          this.buttons = [
+              { theme: "snow", icon: "level-down", class: "add", action: addLine },
+              { theme: "tomato", icon: "trash-o", class: "delete", action: deleteLine },
+          ];
+          this.inputKeyDown = inputKeyDown;
+          this.inputChange = inputChange;
+          this.inputFocus = inputFocus;
+          this.inputBlur = inputBlur;
+          this.addLine = addLine;
+          this.deleteLine = deleteLine;
+      }
+  }
+  const ListItem = component("div", ListItemComponent, {}, [
+      node(Field, {
+          "[value]": "content",
+          "[style]": "style",
+          "[onKeyDown]": "inputKeyDown",
+          "[onInput]": "inputChange",
+          "[onFocus]": "inputFocus",
+          "[onBlur]": "inputBlur",
+          "[index]": "index",
+          extend: {
+              "[index]": "index",
+          },
+      }),
+      // div(
+      //   {
+      //     ...mFor("buttons"),
+      //     mKey: "_i",
+      //     class: "list-item__button list-item__button--{class}",
+      //   },
+      //   node(Button, {
+      //     "[theme]": "theme",
+      //     "[icon]": "icon",
+      //     "[label]": "label",
+      //     square: true,
+      //     "[onClick]": "action",
+      //     "[index]": "index",
+      //   })
+      // ),
+  ]);
+
+  class ListComponent extends MintScope {
+      constructor() {
+          super();
+          listStore.connect(this);
+      }
+  }
+  const List = component("div", ListComponent, {}, [
+      node("form", { "(submit)": "doNothing" }, [
+          node("ul", Object.assign(Object.assign(Object.assign({}, mIf("!isTextarea")), { class: "list" }), mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
+              node(ListItem, {
+                  "[content]": "content",
+                  "[style]": "getStyles",
+                  "[index]": "_i",
+              }),
+          ])),
+          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" })),
+      ]),
+  ]);
 
   class AppComponent extends MintScope {
       constructor() {
@@ -4419,7 +4450,7 @@
       node(Aside),
       node("main", null, [
           div({ class: "main__controls" }, [node(Controls), node(Options)]),
-          div({ class: "main__list" }, node(List)),
+          div({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, node(List, { "[isTextarea]": "isTextarea" })),
       ]),
   ]);
 

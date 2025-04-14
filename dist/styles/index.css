@@ -2354,6 +2354,22 @@ main {
 }
 .main__controls {
   position: fixed;
+  width: 100%;
+}
+.main__controls-section {
+  margin-bottom: 0.5rem;
+}
+.main__controls-form {
+  display: flex;
+  flex-wrap: wrap;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+}
+.main__controls-location {
+  display: inline-block;
+  height: 2rem;
+  padding-left: 1rem;
+  line-height: 2rem;
 }
 .main__list {
   position: relative;
@@ -2406,15 +2422,19 @@ main {
 .list-item label {
   margin: 0;
 }
-.list-item label input {
+.list-item label:hover ~ .list-item__button {
+  visibility: visible;
+  opacity: 1;
+}
+.list-item input,
+.list-item textarea {
   position: relative;
   border: none;
   font-size: 11px;
   line-height: 1.4em;
 }
-.list-item label:hover ~ .list-item__button {
-  visibility: visible;
-  opacity: 1;
+.list-item textarea {
+  padding: 0 0.5rem;
 }
 .list-item__button {
   position: absolute;

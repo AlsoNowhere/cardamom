@@ -4,23 +4,24 @@
   label {
     margin: 0;
 
-    input {
-      position: relative;
-      // .smoke-light-border;
-      border: none;
-      // border-right: 1px solid @smoke;
-      // border-left: 1px solid @smoke;
-      font-size: 11px;
-      // line-height: calc(2em - 2px);
-      line-height: 1.4em;
-    }
-
     &:hover {
       ~ .list-item__button {
         visibility: visible;
         opacity: 1;
       }
     }
+  }
+
+  input,
+  textarea {
+    position: relative;
+    border: none;
+    font-size: 11px;
+    line-height: 1.4em;
+  }
+
+  textarea {
+    padding: 0 @gap;
   }
 
   &__button {

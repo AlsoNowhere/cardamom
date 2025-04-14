@@ -15,16 +15,21 @@ class ControlsComponent extends MintScope {
 export const Controls = component(
   "section",
   ControlsComponent,
-  { class: "margin-bottom-small" },
+  { class: "main__controls-section" },
   [
     node(
       "form",
       {
-        ...mIf("hasFileLoaded"),
-        class: "margin-bottom-small",
+        class: "main__controls-form",
         "(submit)": "doNothing",
       },
-      node(Field, { "[value]": "filePathName", "[onInput]": "updateFileName" })
+      node("<>", { ...mIf("hasFileLoaded") }, [
+        node(Field, {
+          "[value]": "fileName",
+          "[onInput]": "updateFileName",
+        }),
+        node("span", { class: "main__controls-location" }, "{fileLocation}"),
+      ])
     ),
 
     div([
@@ -38,8 +43,17 @@ export const Controls = component(
       node(Button, {
         theme: "blueberry",
         icon: "floppy-o",
+        class: "margin-right-small",
         square: true,
         "[onClick]": "saveToFile",
+      }),
+
+      node(Button, {
+        "[theme]": "isTextareaTheme",
+        icon: "file-text-o",
+        class: "margin-right-small",
+        square: true,
+        "[onClick]": "toggleTextarea",
       }),
     ]),
   ]

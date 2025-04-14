@@ -10,6 +10,24 @@ main {
 .main {
   &__controls {
     position: fixed;
+    width: 100%;
+
+    &-section {
+      margin-bottom: @gap;
+    }
+
+    &-form {
+      .flex;
+      height: @size;
+      margin-bottom: @gap;
+    }
+
+    &-location {
+      display: inline-block;
+      height: @size;
+      padding-left: 1rem;
+      line-height: @size;
+    }
   }
 
   &__list {
