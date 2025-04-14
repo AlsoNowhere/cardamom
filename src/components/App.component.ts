@@ -19,6 +19,9 @@ export const App = component("<>", AppComponent, {}, [
   node(Aside),
   node("main", null, [
     div({ class: "main__controls" }, [node(Controls), node(Options)]),
-    div({ class: "main__list" }, node(List)),
+    div(
+      { class: "main__list", style: "overflow-y: {isTextareaOverflow}" },
+      node(List, { "[isTextarea]": "isTextarea" })
+    ),
   ]),
 ]);
