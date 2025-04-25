@@ -2344,12 +2344,25 @@ code {
   overflow: visible;
   clip: auto;
 }
+.scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+.scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 main {
   width: calc(100% - 2rem);
   height: 100%;
   margin-left: 2rem;
   padding: 2rem;
-  background-color: #eaeaea;
   overflow-y: auto;
 }
 .main__controls {
@@ -2380,6 +2393,20 @@ main {
   margin-top: 120px;
   background-color: #fff;
   overflow-y: auto;
+}
+.main__list::-webkit-scrollbar {
+  width: 10px;
+}
+.main__list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+.main__list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+.main__list::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 .aside {
   position: absolute;

@@ -2861,10 +2861,11 @@
           super();
           this.type = "text";
           this.style = "";
-          this.onKeyDown = null;
+          // this.onKeyDown = null;
           this.onInput = null;
-          this.onFocus = null;
-          this.onBlur = null;
+          // this.onFocus = null;
+          // this.onBlur = null;
+          this.extendField = {};
           this._labelClass = new Resolver(function () {
               return this.labelClass + (this.large ? " large" : "");
           });
@@ -2884,23 +2885,9 @@
   }
   const FieldInput = component("label", FieldInputComponent, { class: "{_labelClass} {isRequired}", "[style]": "labelStyles" }, [
       node("span", { mIf: mIf("hasLabelAbove") }, "{label}"),
-      node("input", {
-          "[type]": "type",
-          "[name]": "name",
-          "[value]": "value",
-          "[checked]": "checked",
-          "[class]": "_inputClass",
-          "[style]": "style",
-          "[placeholder]": "placeholder",
-          "[required]": "required",
-          "[readonly]": "readonly",
-          "[id]": "id",
-          "(keydown)": "onKeyDown",
-          "(input)": "onInput",
-          "(focus)": "onFocus",
-          "(blur)": "onBlur",
-          mRef: mRef("ref"),
-      }),
+      node("input", Object.assign(Object.assign({ "[type]": "type", "[name]": "name", "[value]": "value", "[checked]": "checked", "[class]": "_inputClass", "[style]": "style", "[placeholder]": "placeholder", "[required]": "required", "[readonly]": "readonly", "[id]": "id", 
+          // "(keydown)": "onKeyDown",
+          "(input)": "onInput" }, mExtend("extendField")), mRef("ref"))),
       node("span", { mIf: mIf("hasLabelBeside") }, "{label}"),
   ]);
 
@@ -3047,10 +3034,11 @@
       "[required]": "required",
       "[readonly]": "readonly",
       "[id]": "id",
-      "[onKeyDown]": "onKeyDown",
+      // "[onKeyDown]": "onKeyDown",
       "[onInput]": "onInput",
-      "[onFocus]": "onFocus",
-      "[onBlur]": "onBlur",
+      // "[onFocus]": "onFocus",
+      // "[onBlur]": "onBlur",
+      "[extendField]": "extendField",
       "[ref]": "ref",
   };
   class FieldComponent extends MintScope {
@@ -3063,7 +3051,8 @@
           this.onInput = null;
           this.onFocus = null;
           this.onBlur = null;
-          this.extend = {};
+          this.extendScope = {};
+          this.extendField = {};
           this.ref = null;
           this.isInput = new Resolver(function () {
               const inValidTypes = [
@@ -3093,12 +3082,12 @@
       }
   }
   const Field = component("<>", FieldComponent, { "[class]": "wrapperClasses" }, [
-      node(FieldInput, Object.assign({ mIf: mIf("isInput"), mExtend: mExtend("extend") }, passProps)),
-      node(FieldCheckbox, Object.assign({ mIf: mIf("isCheckbox"), mExtend: mExtend("extend") }, passProps)),
-      node(FieldRadio, Object.assign({ mIf: mIf("isRadio"), mExtend: mExtend("extend") }, passProps)),
-      node(FieldFieldset, Object.assign(Object.assign({ mIf: mIf("isFieldSet"), mExtend: mExtend("extend") }, passProps), { "[options]": "options" })),
-      node(FieldTextarea, Object.assign(Object.assign({ mIf: mIf("isTextarea"), mExtend: mExtend("extend") }, passProps), { "[resize]": "resize" })),
-      node(FieldSelect, Object.assign(Object.assign({ mIf: mIf("isSelect"), mExtend: mExtend("extend") }, passProps), { "[options]": "options" })),
+      node(FieldInput, Object.assign(Object.assign({ mIf: mIf("isInput") }, mExtend("extendScope")), passProps)),
+      node(FieldCheckbox, Object.assign(Object.assign({ mIf: mIf("isCheckbox") }, mExtend("extendScope")), passProps)),
+      node(FieldRadio, Object.assign(Object.assign({ mIf: mIf("isRadio") }, mExtend("extendScope")), passProps)),
+      node(FieldFieldset, Object.assign(Object.assign(Object.assign({ mIf: mIf("isFieldSet") }, mExtend("extendScope")), passProps), { "[options]": "options" })),
+      node(FieldTextarea, Object.assign(Object.assign(Object.assign({ mIf: mIf("isTextarea") }, mExtend("extendScope")), passProps), { "[resize]": "resize" })),
+      node(FieldSelect, Object.assign(Object.assign(Object.assign({ mIf: mIf("isSelect") }, mExtend("extendScope")), passProps), { "[options]": "options" })),
   ]);
 
   const modalTime = 500;
@@ -3631,7 +3620,8 @@
           this.target.append(this.toastContainer);
       }
   }
-  new Toaster(document.body);
+  const toaster = new Toaster(document.body);
+  const toast = (message, theme = "blueberry", alternateElementTarget) => toaster.toast(message, theme, alternateElementTarget);
 
   const resolveLeadingZeroes = (item) => {
       if (typeof item === "number") {
@@ -4376,17 +4366,37 @@
       options[2].theme = undefined;
       externalRefresh(togglesStore);
   };
+  const inputPaste = (event) => {
+      // ** Stop pasting twice
+      event.preventDefault();
+      // ** Get the text to paste
+      const text = event.clipboardData.getData("text/plain");
+      // ** Error catching
+      if (typeof text !== "string") {
+          // ** User notifying
+          toast("Not a string", "tomato");
+          return;
+      }
+      // ** Add new lines
+      const lines = text.split("\n");
+      listStore.lines.splice(listStore.currentIndex, 0, ...lines.map((x) => new Line({ content: x })));
+      externalRefresh(listStore);
+      // ** Return focus to correct index input
+      const input = listStore.listElementRef.children[listStore.currentIndex].querySelector("INPUT");
+      input === null || input === void 0 ? void 0 : input.focus();
+  };
   class ListItemComponent extends MintScope {
       constructor() {
           super();
           this.buttons = [
               { theme: "snow", icon: "level-down", class: "add", action: addLine },
-              { theme: "tomato", icon: "trash-o", class: "delete", action: deleteLine },
+              { theme: "tomato", icon: "trash-o", class: "delete", action: deleteLine }
           ];
           this.inputKeyDown = inputKeyDown;
           this.inputChange = inputChange;
           this.inputFocus = inputFocus;
           this.inputBlur = inputBlur;
+          this.inputPaste = inputPaste;
           this.addLine = addLine;
           this.deleteLine = deleteLine;
       }
@@ -4395,30 +4405,26 @@
       node(Field, {
           "[value]": "content",
           "[style]": "style",
-          "[onKeyDown]": "inputKeyDown",
           "[onInput]": "inputChange",
-          "[onFocus]": "inputFocus",
-          "[onBlur]": "inputBlur",
           "[index]": "index",
-          extend: {
+          "[inputKeyDown]": "inputKeyDown",
+          "[inputFocus]": "inputFocus",
+          "[inputBlur]": "inputBlur",
+          "[inputPaste]": "inputPaste",
+          extendScope: {
               "[index]": "index",
+              "[inputKeyDown]": "inputKeyDown",
+              "[inputFocus]": "inputFocus",
+              "[inputBlur]": "inputBlur",
+              "[inputPaste]": "inputPaste"
           },
-      }),
-      // div(
-      //   {
-      //     ...mFor("buttons"),
-      //     mKey: "_i",
-      //     class: "list-item__button list-item__button--{class}",
-      //   },
-      //   node(Button, {
-      //     "[theme]": "theme",
-      //     "[icon]": "icon",
-      //     "[label]": "label",
-      //     square: true,
-      //     "[onClick]": "action",
-      //     "[index]": "index",
-      //   })
-      // ),
+          extendField: {
+              "(keydown)": "inputKeyDown",
+              "(focus)": "inputFocus",
+              "(blur)": "inputBlur",
+              "(paste)": "inputPaste"
+          }
+      })
   ]);
 
   class ListComponent extends MintScope {
@@ -4433,11 +4439,11 @@
               node(ListItem, {
                   "[content]": "content",
                   "[style]": "getStyles",
-                  "[index]": "_i",
-              }),
+                  "[index]": "_i"
+              })
           ])),
-          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" })),
-      ]),
+          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" }))
+      ])
   ]);
 
   class AppComponent extends MintScope {

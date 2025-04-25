@@ -1,9 +1,10 @@
 import { component, mFor, mIf, MintScope, mRef, node } from "mint";
 
+import { Field } from "thyme";
+
 import { ListItem } from "./ListItem.component";
 
 import { listStore } from "../../stores/list.store";
-import { Field } from "thyme";
 
 class ListComponent extends MintScope {
   constructor() {
@@ -22,8 +23,8 @@ export const List = component("div", ListComponent, {}, [
         node(ListItem, {
           "[content]": "content",
           "[style]": "getStyles",
-          "[index]": "_i",
-        }),
+          "[index]": "_i"
+        })
       ])
     ),
 
@@ -32,7 +33,7 @@ export const List = component("div", ListComponent, {}, [
       type: "textarea",
       "[value]": "textareaContent",
       labelClass: "list-item",
-      style: "height: 100%;",
-    }),
-  ]),
+      style: "height: 100%;"
+    })
+  ])
 ]);
