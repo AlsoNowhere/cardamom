@@ -2487,6 +2487,32 @@ main {
   top: calc(1rem / 2);
   right: calc(-2rem - 1rem / 4);
 }
+.search-bar {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: 1px solid #444;
+  box-shadow: 2px 2px 2px #444;
+}
+.search-bar__header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background-color: #10ad2d;
+}
+.search-bar__header-title {
+  margin: 0;
+  padding-left: 0.5rem;
+}
+.search-bar__content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: 0.5rem;
+}
+.search-bar__button {
+  margin-left: 0.5rem;
+}
 .focus:focus {
   z-index: 1;
   box-shadow: 0 0 2px 3px #19cf94;

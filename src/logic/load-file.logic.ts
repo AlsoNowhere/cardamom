@@ -168,15 +168,12 @@ export const loadFile = (content: string, filePathName: string) => {
   //     return str;
   //   });
 
-  listStore.contentFromFile = content
-    .substring(0, content.indexOf("\\par"))
-    .split("\n");
+  listStore.contentFromFile = content.substring(0, content.indexOf("\\par")).split("\n");
 
   let resolvedContent = "";
   {
-    const mainContent = content
-      .substring(content.indexOf("\\par"), content.length - 1)
-      .split("");
+    const mainContent = content.substring(content.indexOf("\\par"), content.length - 1).split("");
+
     // let targetContent = null;
     // let braceDepths = [];
     for (let [index, char] of mainContent.entries()) {
@@ -199,6 +196,7 @@ export const loadFile = (content: string, filePathName: string) => {
       if ((char === "{" || char === "}") && mainContent[index - 1] !== "\\") {
         continue;
       }
+
       resolvedContent += char;
     }
   }

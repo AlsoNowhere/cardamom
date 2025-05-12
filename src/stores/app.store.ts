@@ -9,16 +9,19 @@ import { listStore } from "./list.store";
 
 class AppStore extends Store {
   isTextarea: boolean;
+  isSearchOpen: boolean;
+  mainListElementRef: HTMLDivElement;
 
   isTextareaOverflow: Resolver<string>;
 
   constructor() {
     super({
       isTextarea: false,
+      isSearchOpen: false,
+      // isSearchOpen: true,
+      mainListElementRef: null,
 
-      isTextareaOverflow: new Resolver(() =>
-        appStore.isTextarea ? "hidden" : "auto"
-      ),
+      isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
 
       oninit: async () => {
         addKeyEvents();
@@ -27,7 +30,7 @@ class AppStore extends Store {
         await wait();
 
         refresh(listStore);
-      },
+      }
     });
   }
 }
