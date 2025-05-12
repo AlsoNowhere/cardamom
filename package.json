@@ -1,6 +1,6 @@
 {
   "name": "cardamom",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "A rich text editor",
   "main": "./electron/main.js",
   "scripts": {
@@ -15,7 +15,7 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "mint": "file:../Mint3"
+    "mint": "file:../Mint"
   },
   "dependencies": {
     "chive": "file:../Chive",

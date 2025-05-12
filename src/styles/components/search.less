@@ -1,0 +1,28 @@
+.search-bar {
+  position: fixed;
+  top: @gap;
+  right: @gap;
+  .border;
+  .shadow;
+
+  &__header {
+    .flex;
+    justify-content: space-between;
+    background-color: @apple;
+
+    &-title {
+      margin: 0;
+      padding-left: @gap;
+    }
+  }
+
+  &__content {
+    .flex;
+    justify-content: space-between;
+    padding: @gap;
+  }
+
+  &__button {
+    margin-left: @gap;
+  }
+}

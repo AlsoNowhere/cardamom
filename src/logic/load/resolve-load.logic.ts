@@ -16,7 +16,7 @@ export const resovleLoadContent = (lines: Array<string>) => {
     isBold: false,
     isItalic: false,
     isUnderline: false,
-    setColour: null,
+    setColour: null
 
     // reset() {
     //   this.isBold = false;
@@ -60,6 +60,12 @@ export const resovleLoadContent = (lines: Array<string>) => {
       content = "";
     }
 
+    if (content !== "") {
+      if (content.charAt(content.length - 1) === " ") {
+        content = content.substring(0, content.length - 1);
+      }
+    }
+
     // ** There is no point defining styles on content that is missing.
     if (content === "") {
       styles = {};
@@ -68,7 +74,7 @@ export const resovleLoadContent = (lines: Array<string>) => {
     output.push(
       new Line({
         content,
-        styles,
+        styles
       })
     );
   }

@@ -4,6 +4,7 @@ import { saveToFile } from "../logic/save-to-file.logic";
 
 import { listStore } from "./list.store";
 import { appStore } from "./app.store";
+import { searchStore } from "./search.store";
 
 class ControlsStore extends Store {
   hasFileLoaded: Resolver<boolean>;
@@ -20,25 +21,16 @@ class ControlsStore extends Store {
     super({
       hasFileLoaded: new Resolver(() => listStore.filePathName !== null),
 
-      fileName: new Resolver(() =>
-        listStore.filePathName.split("\\").pop().split(".").shift()
-      ),
+      fileName: new Resolver(() => listStore.filePathName.split("\\").pop().split(".").shift()),
 
-      fileLocation: new Resolver(() =>
-        listStore.filePathName.split("\\").slice(0, -1).join("\\")
-      ),
+      fileLocation: new Resolver(() => listStore.filePathName.split("\\").slice(0, -1).join("\\")),
 
-      isTextareaTheme: new Resolver(() =>
-        appStore.isTextarea ? "blueberry" : "snow"
-      ),
+      isTextareaTheme: new Resolver(() => (appStore.isTextarea ? "blueberry" : "snow")),
 
       doNothing: (event) => event.preventDefault(),
 
       updateFileName: (_, element) => {
-        const filePath = listStore.filePathName
-          .split("\\")
-          .slice(0, -1)
-          .join("\\");
+        const filePath = listStore.filePathName.split("\\").slice(0, -1).join("\\");
         const newValue = filePath + "\\" + element.value + ".rtf";
         listStore.filePathName = newValue;
       },
@@ -55,6 +47,12 @@ class ControlsStore extends Store {
         appStore.isTextarea = !appStore.isTextarea;
         refresh(appStore);
       },
+
+      openSearch() {
+        if (appStore.isSearchOpen) return;
+        appStore.isSearchOpen = true;
+        refresh(appStore);
+      }
     });
   }
 }

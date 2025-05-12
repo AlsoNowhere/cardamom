@@ -348,8 +348,7 @@
 
   class MintNode {
       constructor(content, generate, render, refresh) {
-          this.content =
-              content instanceof Array ? content : content === null ? [] : [content];
+          this.content = content instanceof Array ? content : content === null ? [] : [content];
           this.generate = generate;
           this.render = render;
           this.refresh = refresh;
@@ -723,12 +722,12 @@
   }
 
   class ComponentBlueprint extends Blueprint {
-      constructor({ mintNode, fragment, element, orderedProps, props, orderedAttributes, attributes, scope, parentBlueprint, collection, childBlueprints, _rootScope, contentFor_children, }) {
+      constructor({ mintNode, fragment, element, orderedProps, props, orderedAttributes, attributes, scope, parentBlueprint, collection, childBlueprints, _rootScope, contentFor_children }) {
           super({
               mintNode,
               scope,
               parentBlueprint,
-              _rootScope,
+              _rootScope
           });
           if (!!fragment)
               this.fragment = fragment;
@@ -750,20 +749,18 @@
       }
   }
 
-  const generateComponentBlueprint = ({ node, orderedProps, props, scope: parentScope, parentBlueprint, _rootScope, isSVG, useGivenScope, }) => {
+  const generateComponentBlueprint = ({ node, orderedProps, props, scope: parentScope, parentBlueprint, _rootScope, isSVG, useGivenScope }) => {
       var _a, _b;
-      // const { mintNode, content: _children } = node;
       const { mintNode, content: _children } = node;
       fixProps(mintNode.attributes);
       const mintComponent = mintNode;
       const { element, content } = mintComponent;
       const attributes = cloneProps({
-          props: mintComponent.attributes,
+          props: mintComponent.attributes
       });
       const orderedAttributes = resolvePropsOrder(attributes);
       // <@ REMOVE FOR PRODUCTION
-      if (!(mintComponent.scope instanceof Function) &&
-          mintComponent.scope !== null) {
+      if (!(mintComponent.scope instanceof Function) && mintComponent.scope !== null) {
           throw new Error(`${MINT_ERROR} Mint Component -- scope -- must pass a constructor function for Component scope argument (second argument) i.e component("div", function(){}`);
       }
       // @>
@@ -818,7 +815,7 @@
           parentBlueprint,
           _rootScope,
           isSVG,
-          isComponent: true,
+          isComponent: true
       };
       {
           // ** Here we resolve the props of the Component.
@@ -850,7 +847,7 @@
           attributes,
           scope: componentScope,
           parentBlueprint,
-          _rootScope,
+          _rootScope
       });
       if (!!_children) {
           blueprint.contentFor_children = [];
@@ -871,7 +868,7 @@
           scope: componentScope,
           parentBlueprint: blueprint,
           _rootScope,
-          isSVG,
+          isSVG
       });
       // ** Check if the children content contains the "_children" keyword.
       // ** Using this allows the content of this child blueprint to use custom content passed into this parent Component.
@@ -1322,15 +1319,15 @@
       }
   }
 
-  const generateMTemplate = ({ node, scope, parentBlueprint, _rootScope, }) => {
-      const mintNode = node.mintNode;
+  const generateMTemplate = ({ node, scope, parentBlueprint, _rootScope }) => {
+      const { mintNode } = node;
       const mintTemplate = mintNode;
       return new TemplateBlueprint({
           mintNode: mintTemplate,
           templateState: null,
           scope,
           parentBlueprint,
-          _rootScope,
+          _rootScope
       });
   };
 
@@ -1679,7 +1676,12 @@
       }
   }
 
-  const node = (element, props = null, initialContent = null) => {
+  function node(element, props = null, initialContent = null) {
+      // export const node = <T extends Object>(
+      //   element: string | MintComponent | MintTemplate,
+      //   props: null | (T & IProps) = null,
+      //   initialContent: null | TRawContent = null
+      // ): CreateNode<T, MintElement | MintComponent | MintTemplate> => {
       // <@ REMOVE FOR PRODUCTION
       if (element === "<>" && props !== null) {
           const acceptableProps = ["mIf", "mFor", "mKey"];
@@ -1703,7 +1705,7 @@
           // (element as MintComponent)._children = content;
       }
       return new CreateNode(mintNode, props, content);
-  };
+  }
 
   class Store {
       constructor(initialData) {
@@ -2707,7 +2709,7 @@
       constructor(callback) {
           super((scope, key) => {
               Object.defineProperty(scope, key, {
-                  get: this.callback,
+                  get: this.callback
               });
           });
           if (callback instanceof Function) {
@@ -3005,17 +3007,7 @@
   }
   const FieldTextarea = component("label", FieldTextareaComponent, { class: "{labelClass} {isRequired}" }, [
       node("span", { mIf: mIf("hasLabel") }, "{label}"),
-      node("textarea", {
-          "[name]": "name",
-          "[value]": "value",
-          "[class]": "class",
-          "[placeholder]": "placeholder",
-          "[style]": "getStyles",
-          "[readonly]": "getReadonly",
-          "[id]": "id",
-          "(input)": "onInput",
-          mRef: mRef("ref"),
-      }),
+      node("textarea", Object.assign(Object.assign({ "[name]": "name", "[value]": "value", "[class]": "class", "[placeholder]": "placeholder", "[style]": "getStyles", "[readonly]": "getReadonly", "[id]": "id", "(input)": "onInput" }, mExtend("extendField")), { mRef: mRef("ref") })),
   ]);
 
   const passProps = {
@@ -3658,6 +3650,10 @@
           if (key === "Control") {
               keysHeld.Control = true;
           }
+          if (key === "f" && keysHeld.Control) {
+              appStore.isSearchOpen = true;
+              externalRefresh(appStore);
+          }
       });
       document.addEventListener("keyup", ({ key }) => {
           if (key === "Control") {
@@ -3794,7 +3790,7 @@
           isBold: false,
           isItalic: false,
           isUnderline: false,
-          setColour: null,
+          setColour: null
           // reset() {
           //   this.isBold = false;
           //   this.isItalic = false;
@@ -3826,13 +3822,18 @@
           if (content === " ") {
               content = "";
           }
+          if (content !== "") {
+              if (content.charAt(content.length - 1) === " ") {
+                  content = content.substring(0, content.length - 1);
+              }
+          }
           // ** There is no point defining styles on content that is missing.
           if (content === "") {
               styles = {};
           }
           output.push(new Line({
               content,
-              styles,
+              styles
           }));
       }
       return output;
@@ -3994,14 +3995,10 @@
       //     // console.log("Each: ", str);
       //     return str;
       //   });
-      listStore.contentFromFile = content
-          .substring(0, content.indexOf("\\par"))
-          .split("\n");
+      listStore.contentFromFile = content.substring(0, content.indexOf("\\par")).split("\n");
       let resolvedContent = "";
       {
-          const mainContent = content
-              .substring(content.indexOf("\\par"), content.length - 1)
-              .split("");
+          const mainContent = content.substring(content.indexOf("\\par"), content.length - 1).split("");
           // let targetContent = null;
           // let braceDepths = [];
           for (let [index, char] of mainContent.entries()) {
@@ -4048,13 +4045,16 @@
       constructor() {
           super({
               isTextarea: false,
-              isTextareaOverflow: new Resolver(() => appStore.isTextarea ? "hidden" : "auto"),
+              isSearchOpen: false,
+              // isSearchOpen: true,
+              mainListElementRef: null,
+              isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
               oninit: () => __awaiter$1(this, void 0, void 0, function* () {
                   addKeyEvents();
                   addLoadFileEvent();
                   yield wait();
                   externalRefresh(listStore);
-              }),
+              })
           });
       }
   }
@@ -4066,13 +4066,10 @@
               hasFileLoaded: new Resolver(() => listStore.filePathName !== null),
               fileName: new Resolver(() => listStore.filePathName.split("\\").pop().split(".").shift()),
               fileLocation: new Resolver(() => listStore.filePathName.split("\\").slice(0, -1).join("\\")),
-              isTextareaTheme: new Resolver(() => appStore.isTextarea ? "blueberry" : "snow"),
+              isTextareaTheme: new Resolver(() => (appStore.isTextarea ? "blueberry" : "snow")),
               doNothing: (event) => event.preventDefault(),
               updateFileName: (_, element) => {
-                  const filePath = listStore.filePathName
-                      .split("\\")
-                      .slice(0, -1)
-                      .join("\\");
+                  const filePath = listStore.filePathName.split("\\").slice(0, -1).join("\\");
                   const newValue = filePath + "\\" + element.value + ".rtf";
                   listStore.filePathName = newValue;
               },
@@ -4086,6 +4083,12 @@
                   appStore.isTextarea = !appStore.isTextarea;
                   externalRefresh(appStore);
               },
+              openSearch() {
+                  if (appStore.isSearchOpen)
+                      return;
+                  appStore.isSearchOpen = true;
+                  externalRefresh(appStore);
+              }
           });
       }
   }
@@ -4100,36 +4103,46 @@
   const Controls = component("section", ControlsComponent, { class: "main__controls-section" }, [
       node("form", {
           class: "main__controls-form",
-          "(submit)": "doNothing",
+          "(submit)": "doNothing"
       }, node("<>", Object.assign({}, mIf("hasFileLoaded")), [
           node(Field, {
               "[value]": "fileName",
-              "[onInput]": "updateFileName",
+              "[onInput]": "updateFileName"
           }),
-          node("span", { class: "main__controls-location" }, "{fileLocation}"),
+          node("span", { class: "main__controls-location" }, "{fileLocation}")
       ])),
       div([
           node(Button, {
               icon: "download",
               class: "margin-right-small",
+              title: "Open file",
               square: true,
-              "[onClick]": "openFile",
+              "[onClick]": "openFile"
           }),
           node(Button, {
               theme: "blueberry",
               icon: "floppy-o",
               class: "margin-right-small",
+              title: "Save content to file",
               square: true,
-              "[onClick]": "saveToFile",
+              "[onClick]": "saveToFile"
           }),
           node(Button, {
               "[theme]": "isTextareaTheme",
               icon: "file-text-o",
               class: "margin-right-small",
+              title: "Toggle textarea",
               square: true,
-              "[onClick]": "toggleTextarea",
+              "[onClick]": "toggleTextarea"
           }),
-      ]),
+          node(Button, {
+              icon: "search",
+              class: "margin-right-small",
+              title: "Open search",
+              square: true,
+              "[onClick]": "openSearch"
+          })
+      ])
   ]);
 
   const changeStyle = (style, value, toggle = false) => {
@@ -4442,7 +4455,41 @@
                   "[index]": "_i"
               })
           ])),
-          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" }))
+          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;", extendField: {
+                  readonly: true
+              } }))
+      ])
+  ]);
+
+  class SearchComponent extends MintScope {
+      constructor() {
+          super();
+          this.close = function () {
+              appStore.isSearchOpen = false;
+              externalRefresh(appStore);
+          };
+          this.runSearch = function (event, element) {
+              event.preventDefault();
+              const searchValue = element.searchValue.value;
+              if (searchValue === "")
+                  return;
+              const index = listStore.lines.findIndex((x) => x.content.includes(searchValue));
+              if (index === -1)
+                  return;
+              const liElement = listStore.listElementRef.children[index];
+              const offset = liElement.offsetTop;
+              appStore.mainListElementRef.scrollTo(0, offset);
+          };
+      }
+  }
+  const Search = component("section", SearchComponent, { class: "search-bar" }, [
+      node("header", { class: "search-bar__header" }, [
+          node("h2", { class: "search-bar__header-title" }, "Search"),
+          node(Button, { theme: "empty", icon: "times", "[onClick]": "close" })
+      ]),
+      node("form", { class: "search-bar__content", "(submit)": "runSearch" }, [
+          node(Field, { name: "searchValue" }),
+          node(Button, { type: "submit", icon: "search", class: "search-bar__button" })
       ])
   ]);
 
@@ -4456,8 +4503,9 @@
       node(Aside),
       node("main", null, [
           div({ class: "main__controls" }, [node(Controls), node(Options)]),
-          div({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, node(List, { "[isTextarea]": "isTextarea" })),
-      ]),
+          div(Object.assign({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, mRef("mainListElementRef")), node(List, { "[isTextarea]": "isTextarea" })),
+          node(Search, Object.assign({}, mIf("isSearchOpen")))
+      ])
   ]);
 
   app(document.body, {}, node(App));
