@@ -7,6 +7,8 @@ import { addLoadFileEvent } from "../logic/add-load-file-event.logic";
 
 import { listStore } from "./list.store";
 
+import { OpenFile } from "../models/OpenFile.model";
+
 class AppStore extends Store {
   isTextarea: boolean;
   isSearchOpen: boolean;
@@ -14,14 +16,23 @@ class AppStore extends Store {
 
   isTextareaOverflow: Resolver<string>;
 
+  openFiles: Array<OpenFile>;
+  currentFileIndex: number;
+  currentTabClass: Resolver<string>;
+
   constructor() {
     super({
       isTextarea: false,
       isSearchOpen: false,
-      // isSearchOpen: true,
       mainListElementRef: null,
 
       isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
+
+      openFiles: [],
+      currentFileIndex: -1,
+      currentTabClass: new Resolver(function () {
+        return this._i === appStore.currentFileIndex ? "blueberry-bg snow-text" : "";
+      }),
 
       oninit: async () => {
         addKeyEvents();

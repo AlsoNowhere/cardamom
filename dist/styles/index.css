@@ -2359,14 +2359,38 @@ code {
   background: #555;
 }
 main {
+  display: flex;
+  flex-direction: column;
   width: calc(100% - 2rem);
   height: 100%;
   margin-left: 2rem;
   padding: 2rem;
   overflow-y: auto;
 }
+.main__tabs {
+  height: 2rem;
+  margin-bottom: 0.5rem;
+}
+.main__tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.main__tabs-list-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-grow: 1;
+  max-width: 120px;
+  padding-left: 0.5rem;
+  border-right: 1px solid #196acf;
+  border-bottom: 1px solid #196acf;
+  line-height: 2rem;
+  cursor: pointer;
+}
 .main__controls {
-  position: fixed;
   width: 100%;
 }
 .main__controls-section {
@@ -2389,8 +2413,7 @@ main {
   padding: 1rem;
   border: 1px solid #444;
   border-radius: 4px;
-  height: calc(100% - 120px);
-  margin-top: 120px;
+  flex-grow: 1;
   background-color: #fff;
   overflow-y: auto;
 }

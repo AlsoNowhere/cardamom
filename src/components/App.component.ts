@@ -5,6 +5,7 @@ import { Controls } from "./tool-bars/Controls.component";
 import { Options } from "./tool-bars/Options.component";
 import { List } from "./list/List.component";
 import { Search } from "./structure/Search.component";
+import { Tabs } from "./structure/Tabs.component";
 
 import { appStore } from "../stores/app.store";
 
@@ -19,6 +20,9 @@ class AppComponent extends MintScope {
 export const App = component("<>", AppComponent, {}, [
   node(Aside),
   node("main", null, [
+    node(Tabs, {
+      "[currentTabClass]": "currentTabClass"
+    }),
     div({ class: "main__controls" }, [node(Controls), node(Options)]),
     div(
       { class: "main__list", style: "overflow-y: {isTextareaOverflow}", ...mRef("mainListElementRef") },

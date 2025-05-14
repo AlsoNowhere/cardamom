@@ -9,7 +9,7 @@ import { Line } from "../../models/Line.model";
 
 import { IStates } from "../../interfaces/IStates.interface";
 
-export const resovleLoadContent = (lines: Array<string>) => {
+export const resovleLoadContent = (lines: Array<string>, colours: Array<string>) => {
   const output: Array<Line> = [];
 
   const states: IStates = {
@@ -17,13 +17,6 @@ export const resovleLoadContent = (lines: Array<string>) => {
     isItalic: false,
     isUnderline: false,
     setColour: null
-
-    // reset() {
-    //   this.isBold = false;
-    //   this.isItalic = false;
-    //   this.isUnderline = false;
-    //   this.setColour = null;
-    // },
   };
 
   for (let line of lines) {
@@ -50,7 +43,7 @@ export const resovleLoadContent = (lines: Array<string>) => {
     content = resolveUnderline(states, content, styles);
 
     // ** Colours
-    content = resolveColours(states, content, styles);
+    content = resolveColours(states, content, styles, colours);
 
     // ** Other things resolved, like tab indents
     content = resolveOther(content);
