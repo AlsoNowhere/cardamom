@@ -4,7 +4,6 @@ import { saveToFile } from "../logic/save-to-file.logic";
 
 import { listStore } from "./list.store";
 import { appStore } from "./app.store";
-import { searchStore } from "./search.store";
 
 class ControlsStore extends Store {
   hasFileLoaded: Resolver<boolean>;

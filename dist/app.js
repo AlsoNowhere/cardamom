@@ -3200,7 +3200,7 @@
       node(template("router")),
   ]);
 
-  class TabsComponent extends MintScope {
+  class TabsComponent$1 extends MintScope {
       constructor() {
           super();
           const scope = this;
@@ -3230,7 +3230,7 @@
           };
       }
   }
-  component("div", TabsComponent, { class: "tabs", mRef: mRef("ref") }, [
+  component("div", TabsComponent$1, { class: "tabs", mRef: mRef("ref") }, [
       node("ul", { class: "tabs__list" }, node("li", {
           mFor: mFor("tabs"),
           mKey: "name",
@@ -3384,79 +3384,22 @@
   };
 
   const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
-  // const resolveFirstContentLine = (line: string, appContent: string) => {
-  //   // ** Remove an unneeded line break that might be added.
-  //   if (line.substring(line.length - 5) === "\\par\r") {
-  //     line = line.substring(0, line.length - 5);
-  //   }
-  //   // ** If there is no appContent then we don't need to add a space in.
-  //   line = appContent === "" ? line + "\n" : line + " " + appContent + "\n";
-  //   {
-  //     const lineStart = line.includes("{")
-  //       ? line.substring(0, line.lastIndexOf("}") + 1)
-  //       : "";
-  //     let lineEnd = line.includes("{")
-  //       ? line.substring(line.lastIndexOf("}") + 1, line.length)
-  //       : line;
-  //     let lineHeightSet = [false, false];
-  //     let fontSizeSet = false;
-  //     lineEnd = lineEnd
-  //       .split("\\")
-  //       .map((x) => {
-  //         if (line.charAt(0) !== "\\" || x.includes(" ")) return x;
-  //         if (x.substring(0, 2) === "sl" && x.length === 5) {
-  //           lineHeightSet[0] = true;
-  //           return "sl240";
-  //         }
-  //         if (x.substring(0, 7) === "slmulti") {
-  //           lineHeightSet[1] = true;
-  //           return x;
-  //         }
-  //         if (x.substring(0, 2) === "fs") {
-  //           fontSizeSet = true;
-  //           return "fs22";
-  //         }
-  //         return x;
-  //       })
-  //       .join("\\");
-  //     if (!lineHeightSet[1]) {
-  //       lineEnd = "\\slmulti" + lineEnd;
-  //     }
-  //     if (!lineHeightSet[0]) {
-  //       lineEnd = "\\sl240" + lineEnd;
-  //     }
-  //     if (!fontSizeSet) {
-  //       lineEnd = "\\fs22" + lineEnd;
-  //     }
-  //     line = lineStart + lineEnd;
-  //   }
-  //   return line;
-  // };
   const saveToFile = () => {
-      const { appContent, coloursLine } = resolveSaveContent(listStore.lines);
+      const { lines, filePathName } = listStore;
+      const { appContent, coloursLine } = resolveSaveContent(lines);
       resolveSaveColours(coloursLine);
-      // const contentLinesBeforeContent = listStore.contentFromFile
-      //   .slice(0, -1)
-      //   .join("\n");
       const _contentLinesBeforeContent = [
           "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
           "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
-          "\\pard\\sl240\\slmult1\\f0\\fs22\\lang9\\par",
+          "\\pard\\sl240\\slmult1\\f0\\fs22\\lang9\\par"
       ];
       if (coloursLine !== undefined) {
           _contentLinesBeforeContent.splice(1, 0, coloursLine);
       }
       const contentLinesBeforeContent = _contentLinesBeforeContent.join("\n");
-      // const firstLineWithContent = resolveFirstContentLine(
-      //   listStore.contentFromFile.at(-1),
-      //   appContent
-      // );
-      // const content =
-      //   contentLinesBeforeContent + firstLineWithContent + endOfFileContent;
       const content = contentLinesBeforeContent + " " + appContent + endOfFileContent;
-      // console.log(content);
       const saveToFile = new CustomEvent("saveToFile", {
-          detail: { content, filePathName: listStore.filePathName },
+          detail: { content, filePathName }
       });
       window.dispatchEvent(saveToFile);
   };
@@ -3701,11 +3644,11 @@
       return content;
   };
 
-  const resolveColours = (states, content, styles) => {
+  const resolveColours = (states, content, styles, colours) => {
       {
           let index = 1;
           // ** Font colour
-          for (let colour of listStore.colours) {
+          for (let colour of colours) {
               if (content.includes(`\\cf${index}`)) {
                   states.setColour = colour;
               }
@@ -3720,7 +3663,7 @@
           content = content.replace(`\\cf0`, "");
       }
       {
-          for (let index of listStore.colours.map((_, i) => i + 1)) {
+          for (let index of colours.map((_, i) => i + 1)) {
               content = content.replace(`\\cf${index} `, "");
           }
       }
@@ -3784,19 +3727,13 @@
       }
   }
 
-  const resovleLoadContent = (lines) => {
+  const resovleLoadContent = (lines, colours) => {
       const output = [];
       const states = {
           isBold: false,
           isItalic: false,
           isUnderline: false,
           setColour: null
-          // reset() {
-          //   this.isBold = false;
-          //   this.isItalic = false;
-          //   this.isUnderline = false;
-          //   this.setColour = null;
-          // },
       };
       for (let line of lines) {
           let styles = {};
@@ -3815,7 +3752,7 @@
           // ** Underline
           content = resolveUnderline(states, content, styles);
           // ** Colours
-          content = resolveColours(states, content, styles);
+          content = resolveColours(states, content, styles, colours);
           // ** Other things resolved, like tab indents
           content = resolveOther(content);
           // ** Remove content that is just one space (an output from one of the above).
@@ -3839,199 +3776,52 @@
       return output;
   };
 
-  /*
-  const getContent = (contentLines: Array<string>) => {
-    // ** The first line of content will be the first line to have "\par in".
-    // const firstContentLineIndex = contentLines.findIndex((x) =>
-    //   x.includes("\\par")
-    // );
-    // ** This means the lines from the start until here are non content lines.
-    // const contentLinesBeforeContent = contentLines.slice(
-    //   0,
-    //   firstContentLineIndex
-    // );
-
-    const firstContentLine = contentLines.find((x) => x.includes("\\par"));
-    const contentIndex = contentLines.indexOf(firstContentLine);
-    const linesBeforeContent = contentLines.slice(0, contentIndex);
-
-    // const firstLineWithContent = contentLines[firstContentLineIndex];
-    let preContent = "";
-    // let openingContent = "";
-    let firstContent = "";
-
-    const index = firstContentLine.includes("{")
-      ? firstContentLine.lastIndexOf("}") + 1
-      : 0;
-    const { length } = firstContentLine;
-    preContent += firstContentLine.substring(0, index);
-    firstContent = firstContentLine.substring(index, length);
-
-    {
-      const [firstMatch] = [...firstContent.matchAll(/\s[^\\]/g)];
-      if (firstMatch === undefined) {
-        firstContent = "";
-      } else {
-        const { index } = firstMatch;
-        const { length } = firstContent;
-        preContent += firstContent.substring(0, index);
-        firstContent = firstContent.substring(index + 1, length);
+  class OpenFile {
+      constructor(filePathName, lines, colours) {
+          this.filePathName = filePathName;
+          this.fileName = this.filePathName.split("\\").at(-1).split(".").at(0);
+          this.lines = lines;
+          this.colours = colours;
       }
-    }
+  }
 
-    // if (firstLineWithContentNonContent.charAt(0) === "{") {
-    //   const index = firstLineWithContentNonContent.indexOf("}") + 1;
-    //   openingContent = firstLineWithContentNonContent.substring(0, index);
-    //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
-    //     index,
-    //     firstLineWithContentNonContent.length
-    //   );
-    // }
-    // if (firstLineWithContentNonContent.includes(" ")) {
-    //   const index = firstLineWithContentNonContent.indexOf(" ");
-    //   firstContent = firstLineWithContentNonContent.substring(
-    //     index + 1,
-    //     firstLineWithContentNonContent.length
-    //   );
-    //   firstLineWithContentNonContent = firstLineWithContentNonContent.substring(
-    //     0,
-    //     index
-    //   );
-    // }
-    // firstLineWithContentNonContent =
-    //   openingContent + firstLineWithContentNonContent;
-
-    // console.log("Contente: ", preContent, "|", firstContent);
-
-    return {
-      linesBeforeContent,
-      firstContentLine,
-      contentIndex,
-      // firstContentLineIndex,
-      // contentLinesBeforeContent,
-      // firstLineWithContentNonContent,
-      preContent,
-      firstContent,
-    };
+  const selectTab = (index) => {
+      appStore.currentFileIndex = index;
+      if (index === -1) {
+          listStore.filePathName = "";
+          listStore.lines = [];
+          listStore.colours = [];
+      }
+      else {
+          const openFile = appStore.openFiles[index];
+          listStore.filePathName = openFile.filePathName;
+          listStore.lines = openFile.lines;
+          listStore.colours = openFile.colours;
+      }
+      externalRefresh(appStore);
   };
-  */
+
   const loadFile = (content, filePathName) => {
-      // ** Set the file name on the store so we have it for later (when saving or editing).
-      listStore.filePathName = filePathName;
-      /*
-      // console.log(content);
-    
-      // content = content.replace(/{[^{}]*}/g, (x) => x.replace(/\n/g, " "));
-    
-      // const mats = [...content.matchAll(/{[^{}]*}/g)];
-      // console.log("MAts: ", mats);
-    
-      // ** Parsed the rich text file
-      const contentLines = content.split("\n");
-    
-      const {
-        // firstContentLine,
-        linesBeforeContent,
-        contentIndex,
-        // firstContentLineIndex,
-        // contentLinesBeforeContent,
-        // firstLineWithContentNonContent,
-        // firstLineOfContent,
-        preContent,
-        firstContent,
-      } = getContent(contentLines);
-    
-      let completeContent = [
-        firstContent,
-        ...contentLines.slice(contentIndex),
-      ].join("\n");
-      // console.log(contentLines.slice(contentIndex));
-    
-      completeContent = completeContent.replace(/{[^{}]*}/g, (x) => {
-        // x.replace(/\n/g, " ")
-        const str = x.substring(1, x.length - 1);
-        console.log("Each: ", str);
-        return str;
-      });
-      // console.log(completeContent);
-    
-      const contentLines2 = completeContent.split("\n");
-    
-    
-    
-      // ** Here we resolve certain aspects of the styling of the file
-      // ** such as font size and line height.
-      const managedPreContent = resolvefirstContent(preContent);
-      // ** Save the content for later; when we put it back together to save the file.
-      listStore.contentFromFile = [...linesBeforeContent, managedPreContent];
-    
-      const lines: Array<string> = [];
-    
-      // ** Check if the content is empty.
-      lines.push(firstContent);
-      // if (firstContent !== "") {
-      //   lines.push(firstContent.substring(firstContent.indexOf(" ") + 1));
-      // }
-      // // ** We need to have at least one line, even if its an empty string.
-      // else {
-      //   lines.push("");
-      // }
-    
-      {
-        // ** Extract the content lines.
-        let i = contentIndex + 1;
-        while (i < contentLines2.length - 2) {
-          const line = contentLines2[i];
-          lines.push(line);
-          i++;
-        }
-      }
-        */
-      // content = content
-      //   .substring(content.indexOf("\\par"), content.length - 1)
-      //   .replace(/{[^{}]*}/g, (x) => {
-      //     x = x.replace(/\n/g, " ");
-      //     const str = x.substring(1, x.length - 1);
-      //     // console.log("Each: ", str);
-      //     return str;
-      //   });
       listStore.contentFromFile = content.substring(0, content.indexOf("\\par")).split("\n");
       let resolvedContent = "";
       {
           const mainContent = content.substring(content.indexOf("\\par"), content.length - 1).split("");
-          // let targetContent = null;
-          // let braceDepths = [];
           for (let [index, char] of mainContent.entries()) {
-              // if (char === "{") {
-              //   braceDepths.push(index);
-              // } else if (char === "}") {
-              //   targetContent = mainContent.substring(braceDepths.pop(), index + 1);
-              // } else if (braceDepths.length === 0) {
-              //   resolvedContent += char;
-              // }
-              // if (targetContent !== null) {
-              //   console.log("Each: ", targetContent);
-              //   targetContent = targetContent.replace(/\n/g, " ");
-              //   const str = targetContent.substring(1, targetContent.length - 1);
-              //   console.log("Str: ", str);
-              //   resolvedContent += str;
-              //   targetContent = null;
-              // }
               if ((char === "{" || char === "}") && mainContent[index - 1] !== "\\") {
                   continue;
               }
               resolvedContent += char;
           }
       }
-      // console.log(resolvedContent);
       const contentLines = resolvedContent.split("\n");
       // ** Set the colours for this file.
       const colourLine = contentLines.find((x) => x.includes("\\colortbl"));
-      listStore.colours = resolveColours$1(colourLine);
-      const lines = contentLines;
-      // console.log("Lines: ", lines);
-      listStore.lines = resovleLoadContent(lines);
-      externalRefresh(appStore);
+      const colours = resolveColours$1(colourLine);
+      const lines = resovleLoadContent(contentLines, colours);
+      const openFile = new OpenFile(filePathName, lines, colours);
+      appStore.openFiles.push(openFile);
+      selectTab(appStore.openFiles.length - 1);
+      // refresh(appStore);
   };
 
   const addLoadFileEvent = () => {
@@ -4046,9 +3836,13 @@
           super({
               isTextarea: false,
               isSearchOpen: false,
-              // isSearchOpen: true,
               mainListElementRef: null,
               isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
+              openFiles: [],
+              currentFileIndex: -1,
+              currentTabClass: new Resolver(function () {
+                  return this._i === appStore.currentFileIndex ? "blueberry-bg snow-text" : "";
+              }),
               oninit: () => __awaiter$1(this, void 0, void 0, function* () {
                   addKeyEvents();
                   addLoadFileEvent();
@@ -4493,6 +4287,57 @@
       ])
   ]);
 
+  class TabsStore extends Store {
+      constructor() {
+          super({
+              tabs: new Resolver(() => appStore.openFiles),
+              selectTab: function () {
+                  if (appStore.currentFileIndex === this._i)
+                      return;
+                  selectTab(this._i);
+              },
+              removeTab: function (event) {
+                  event.stopPropagation();
+                  const index = this.index;
+                  let newIndex;
+                  appStore.openFiles.splice(index, 1);
+                  if (appStore.currentFileIndex !== index) {
+                      externalRefresh(tabsStore);
+                      return;
+                  }
+                  if (appStore.openFiles.length === 0) {
+                      newIndex = -1;
+                  }
+                  else {
+                      newIndex = index === 0 ? 0 : index - 1;
+                  }
+                  selectTab(newIndex);
+              }
+          });
+      }
+  }
+  const tabsStore = new TabsStore();
+
+  class TabsComponent extends MintScope {
+      constructor() {
+          super();
+          tabsStore.connect(this);
+      }
+  }
+  const Tabs = component("div", TabsComponent, { class: "main__tabs" }, [
+      node("ul", { class: "main__tabs-list" }, node("li", Object.assign(Object.assign({}, mFor("tabs")), { mKey: "_i", class: "main__tabs-list-item {currentTabClass}", "(click)": "selectTab" }), [
+          span("{fileName}"),
+          node(Button, {
+              theme: "empty",
+              icon: "times",
+              class: "snow-text",
+              square: true,
+              "[onClick]": "removeTab",
+              "[index]": "_i"
+          })
+      ]))
+  ]);
+
   class AppComponent extends MintScope {
       constructor() {
           super();
@@ -4502,6 +4347,9 @@
   const App = component("<>", AppComponent, {}, [
       node(Aside),
       node("main", null, [
+          node(Tabs, {
+              "[currentTabClass]": "currentTabClass"
+          }),
           div({ class: "main__controls" }, [node(Controls), node(Options)]),
           div(Object.assign({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, mRef("mainListElementRef")), node(List, { "[isTextarea]": "isTextarea" })),
           node(Search, Object.assign({}, mIf("isSearchOpen")))

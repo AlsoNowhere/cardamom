@@ -1,16 +1,15 @@
-import { listStore } from "../../stores/list.store";
-
 import { IStates } from "../../interfaces/IStates.interface";
 
 export const resolveColours = (
   states: IStates,
   content: string,
-  styles: Record<string, string>
+  styles: Record<string, string>,
+  colours: Array<string>
 ) => {
   {
     let index = 1;
     // ** Font colour
-    for (let colour of listStore.colours) {
+    for (let colour of colours) {
       if (content.includes(`\\cf${index}`)) {
         states.setColour = colour;
       }
@@ -27,7 +26,7 @@ export const resolveColours = (
   }
 
   {
-    for (let index of listStore.colours.map((_, i) => i + 1)) {
+    for (let index of colours.map((_, i) => i + 1)) {
       content = content.replace(`\\cf${index} `, "");
     }
   }
