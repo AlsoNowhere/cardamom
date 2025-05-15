@@ -2,6 +2,8 @@ import { MintEvent, Resolver, Store } from "mint";
 
 import { Line } from "../models/Line.model";
 
+import { defaultFontSize } from "../data/constants.data";
+
 class ListStore extends Store {
   filePathName: string;
   contentFromFile: Array<string>;
@@ -9,6 +11,7 @@ class ListStore extends Store {
   currentIndex: number;
   lastCurrentIndex: number;
   colours: Array<string>;
+  fontSize: number;
   listElementRef: HTMLUListElement;
 
   textareaContent: Resolver<string>;
@@ -23,6 +26,7 @@ class ListStore extends Store {
       currentIndex: null,
       lastCurrentIndex: null,
       colours: {},
+      fontSize: defaultFontSize,
       listElementRef: null,
 
       textareaContent: new Resolver(() => {
@@ -31,7 +35,7 @@ class ListStore extends Store {
 
       doNothing(event) {
         event.preventDefault();
-      },
+      }
     });
   }
 }

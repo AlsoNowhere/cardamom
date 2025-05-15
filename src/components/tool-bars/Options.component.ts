@@ -1,6 +1,6 @@
 import { component, mFor, MintScope, mRef, node } from "mint";
 
-import { Button, ColourSelector } from "thyme";
+import { Button, ColourSelector, Field, TField } from "thyme";
 
 import { optionsStore } from "../../stores/options.store";
 import { togglesStore } from "../../stores/toggles.store";
@@ -23,7 +23,7 @@ const Toggles = component(
     "[theme]": "theme",
     square: true,
     "[content]": "content",
-    "[onClick]": "action",
+    "[onClick]": "action"
   })
 );
 
@@ -40,10 +40,17 @@ export const Options = component(
   OptionsComponent,
   {
     ...mRef("optionsElementRef"),
-    class: "margin-bottom-small",
+    class: "margin-bottom-small"
   },
   node("ul", { class: "list flex" }, [
     node(Toggles, { "[options]": "options" }),
     node(ColourSelector, { "[onInput]": "chooseColour" }),
+    node<TField>(Field, {
+      type: "number",
+      class: "margin-left",
+      "[value]": "fontSize",
+      "[onInput]": "changeFontSize",
+      extendField: { min: "8", max: "22" }
+    })
   ])
 );

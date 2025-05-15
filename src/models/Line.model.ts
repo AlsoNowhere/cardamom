@@ -1,7 +1,8 @@
 import { styles as _styles } from "sage";
 
+import { listStore } from "../stores/list.store";
+
 import { lineId } from "../data/constants.data";
-import { variables } from "../data/variables.data";
 
 export class Line {
   content: string;
@@ -11,12 +12,8 @@ export class Line {
   getStyles: () => string;
 
   constructor(
-    {
-      content = "",
-      styles = {},
-      id,
-    }: { content?: string; styles?: Record<string, string>; id?: number } = {
-      content: "",
+    { content = "", styles = {}, id }: { content?: string; styles?: Record<string, string>; id?: number } = {
+      content: ""
     }
   ) {
     this.content = content;
@@ -31,8 +28,7 @@ export class Line {
     this.getStyles = () => {
       return _styles({
         ...this.styles,
-        // "font-size": `${variables.fontSize}px`,
-        // "line-height": "calc(2em - 2px)",
+        "font-size": listStore.fontSize.toString()
       });
     };
   }

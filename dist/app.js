@@ -1200,32 +1200,20 @@
   };
 
   const resolveMAttributesOnRefresh = (blueprint, parentElement, options) => {
-      const { orderedProps = [], props = {}, orderedAttributes = [], attributes = {}, } = blueprint;
+      const { orderedProps = [], props = {}, orderedAttributes = [], attributes = {} } = blueprint;
       let shouldExit = { condition: false, value: undefined };
       for (let key of orderedProps) {
           const property = props[key];
           const resolver = property.onRefresh;
-          if (shouldExit.condition === false &&
-              property instanceof MintAttribute &&
-              resolver instanceof Function) {
-              shouldExit = resolver.apply(property, [
-                  blueprint,
-                  parentElement,
-                  options,
-              ]);
+          if (shouldExit.condition === false && property instanceof MintAttribute && resolver instanceof Function) {
+              shouldExit = resolver.apply(property, [blueprint, parentElement, options]);
           }
       }
       for (let key of orderedAttributes) {
           const property = attributes[key];
           const resolver = property.onRefresh;
-          if (shouldExit.condition === false &&
-              property instanceof MintAttribute &&
-              resolver instanceof Function) {
-              shouldExit = resolver.apply(property, [
-                  blueprint,
-                  parentElement,
-                  options,
-              ]);
+          if (shouldExit.condition === false && property instanceof MintAttribute && resolver instanceof Function) {
+              shouldExit = resolver.apply(property, [blueprint, parentElement, options]);
           }
       }
       return shouldExit;
@@ -3346,6 +3334,9 @@
       };
   };
 
+  const lineId = { index: 0 };
+  const defaultFontSize = 11;
+
   class ListStore extends Store {
       constructor() {
           super({
@@ -3355,13 +3346,14 @@
               currentIndex: null,
               lastCurrentIndex: null,
               colours: {},
+              fontSize: defaultFontSize,
               listElementRef: null,
               textareaContent: new Resolver(() => {
                   return listStore.lines.map((x) => x.content).join("\n");
               }),
               doNothing(event) {
                   event.preventDefault();
-              },
+              }
           });
       }
   }
@@ -3385,13 +3377,14 @@
 
   const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
   const saveToFile = () => {
-      const { lines, filePathName } = listStore;
+      const { lines, filePathName, fontSize } = listStore;
       const { appContent, coloursLine } = resolveSaveContent(lines);
       resolveSaveColours(coloursLine);
+      const fs = fontSize * 2;
       const _contentLinesBeforeContent = [
           "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
           "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
-          "\\pard\\sl240\\slmult1\\f0\\fs22\\lang9\\par"
+          `\\pard\\sl240\\slmult1\\f0\\fs${fs}\\lang9\\par`
       ];
       if (coloursLine !== undefined) {
           _contentLinesBeforeContent.splice(1, 0, coloursLine);
@@ -3707,11 +3700,9 @@
       return content;
   };
 
-  const lineId = { index: 0 };
-
   class Line {
-      constructor({ content = "", styles: styles$1 = {}, id, } = {
-          content: "",
+      constructor({ content = "", styles: styles$1 = {}, id } = {
+          content: ""
       }) {
           this.content = content;
           this.styles = styles$1;
@@ -3722,7 +3713,7 @@
               this.id = ++lineId.index;
           }
           this.getStyles = () => {
-              return styles(Object.assign({}, this.styles));
+              return styles(Object.assign(Object.assign({}, this.styles), { "font-size": listStore.fontSize.toString() }));
           };
       }
   }
@@ -3776,33 +3767,46 @@
       return output;
   };
 
-  class OpenFile {
-      constructor(filePathName, lines, colours) {
-          this.filePathName = filePathName;
-          this.fileName = this.filePathName.split("\\").at(-1).split(".").at(0);
-          this.lines = lines;
-          this.colours = colours;
-      }
-  }
-
   const selectTab = (index) => {
       appStore.currentFileIndex = index;
       if (index === -1) {
           listStore.filePathName = "";
           listStore.lines = [];
           listStore.colours = [];
+          listStore.fontSize = defaultFontSize;
       }
       else {
           const openFile = appStore.openFiles[index];
           listStore.filePathName = openFile.filePathName;
           listStore.lines = openFile.lines;
           listStore.colours = openFile.colours;
+          listStore.fontSize = openFile.fontSize;
       }
       externalRefresh(appStore);
   };
 
+  class OpenFile {
+      constructor(filePathName, lines, colours, fontSize) {
+          this.filePathName = filePathName;
+          this.fileName = this.filePathName.split("\\").at(-1).split(".").at(0);
+          this.lines = lines;
+          this.colours = colours;
+          this.fontSize = fontSize;
+      }
+  }
+
+  const getFontSize = (content) => {
+      const attrs = content.split("\\");
+      const fs = attrs.find((x) => x.includes("fs"));
+      if (fs === undefined)
+          return defaultFontSize;
+      const int = parseInt(fs.replace("fs", ""));
+      return int / 2;
+  };
   const loadFile = (content, filePathName) => {
       listStore.contentFromFile = content.substring(0, content.indexOf("\\par")).split("\n");
+      const fontSize = getFontSize(content.split("\n").find((x) => x.includes("\\pard")));
+      listStore.fontSize = fontSize;
       let resolvedContent = "";
       {
           const mainContent = content.substring(content.indexOf("\\par"), content.length - 1).split("");
@@ -3818,10 +3822,9 @@
       const colourLine = contentLines.find((x) => x.includes("\\colortbl"));
       const colours = resolveColours$1(colourLine);
       const lines = resovleLoadContent(contentLines, colours);
-      const openFile = new OpenFile(filePathName, lines, colours);
+      const openFile = new OpenFile(filePathName, lines, colours, fontSize);
       appStore.openFiles.push(openFile);
       selectTab(appStore.openFiles.length - 1);
-      // refresh(appStore);
   };
 
   const addLoadFileEvent = () => {
@@ -4028,13 +4031,22 @@
   const chooseColour = (colour) => {
       changeStyle("color", colour);
   };
+  const changeFontSize = (_, element) => {
+      const value = parseInt(element.value);
+      if (value < 8 || value > 22)
+          return;
+      listStore.fontSize = value;
+      externalRefresh(listStore);
+  };
   class OptionsStore extends Store {
       constructor() {
           super({
               isBoldy: true,
               options,
-              chooseColour,
+              fontSize: new Resolver(() => listStore.fontSize),
               optionsElementRef: null,
+              chooseColour,
+              changeFontSize
           });
       }
   }
@@ -4063,6 +4075,13 @@
   const Options = component("section", OptionsComponent, Object.assign(Object.assign({}, mRef("optionsElementRef")), { class: "margin-bottom-small" }), node("ul", { class: "list flex" }, [
       node(Toggles, { "[options]": "options" }),
       node(ColourSelector, { "[onInput]": "chooseColour" }),
+      node(Field, {
+          type: "number",
+          class: "margin-left",
+          "[value]": "fontSize",
+          "[onInput]": "changeFontSize",
+          extendField: { min: "8", max: "22" }
+      })
   ]));
 
   const addLine = function () {
