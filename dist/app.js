@@ -729,6 +729,7 @@
               parentBlueprint,
               _rootScope
           });
+          this.isComponent = true;
           if (!!fragment)
               this.fragment = fragment;
           if (!!element)
@@ -1000,10 +1001,17 @@
           }
       }
   };
-  const renderAttributes = (element, orderedAttributes, attributes, scope) => {
+  const renderAttributes = (
+  // element: TElement,
+  // orderedAttributes: null | Array<string>,
+  // attributes: IAttributes,
+  // scope: Object
+  blueprint) => {
+      const { orderedAttributes, attributes, scope } = blueprint;
+      const element = blueprint.element;
       /* DEV */
       // _DevLogger_("RENDER", "ATTRIBUTES", orderedAttributes, { element });
-      if (orderedAttributes === null)
+      if (attributes === undefined || orderedAttributes === null)
           return;
       // <@ REMOVE FOR PRODUCTION
       if (orderedAttributes === undefined)
@@ -1029,13 +1037,14 @@
       /* Dev */
       // _DevLogger_("RENDER", "COMPONENT", blueprint);
       var _a, _b, _c, _d, _e;
-      const { element, orderedAttributes, attributes, scope, collection, childBlueprints, } = blueprint;
+      const { element, scope, collection, childBlueprints } = blueprint;
       // ** LIFECYCLE CALL
       (_a = scope.oninit) === null || _a === void 0 ? void 0 : _a.call(scope, { scope });
       (_b = scope.oninsert) === null || _b === void 0 ? void 0 : _b.call(scope, { scope });
       (_c = scope.oneach) === null || _c === void 0 ? void 0 : _c.call(scope, { scope });
       if (element !== undefined) {
-          renderAttributes(element, orderedAttributes, attributes, scope);
+          // renderAttributes(element, orderedAttributes, attributes, scope);
+          renderAttributes(blueprint);
       }
       // ** Here we add the Component Element to the parentElement, if there is a Component Element.
       if (element !== undefined) {
@@ -1044,9 +1053,7 @@
       // ** Here we add the collection of Component Elements if there is a collection.
       if (collection !== undefined) {
           for (let x of collection) {
-              renderBlueprints([x], parentElement, parentChildBlueprints, [
-                  blueprintIndex,
-              ]);
+              renderBlueprints([x], parentElement, parentChildBlueprints, [blueprintIndex]);
           }
       }
       // ** Here we handle the children of this Component, if it has any.
@@ -1489,13 +1496,14 @@
   };
 
   class ElementBlueprint extends Blueprint {
-      constructor({ mintNode, fragment, element, orderedAttributes, attributes, scope, parentBlueprint, _rootScope, collection, childBlueprints, }) {
+      constructor({ mintNode, fragment, element, orderedAttributes, attributes, scope, parentBlueprint, _rootScope, collection, childBlueprints }) {
           super({
               mintNode,
               scope,
               parentBlueprint,
-              _rootScope,
+              _rootScope
           });
+          this.isComponent = false;
           if (!!fragment)
               this.fragment = fragment;
           if (!!element)
@@ -1599,11 +1607,12 @@
   };
 
   const renderElementBlueprint = (blueprint, parentElement, parentChildBlueprints, blueprintIndex) => {
-      const { element, orderedAttributes, attributes, scope, collection, childBlueprints, } = blueprint;
+      const { element, collection, childBlueprints } = blueprint;
       /* Dev */
       // _DevLogger_("RENDER", "ELEMENT", blueprint, blueprintIndex);
       if (element !== undefined) {
-          renderAttributes(element, orderedAttributes, attributes, scope);
+          // renderAttributes(element, orderedAttributes, attributes, scope);
+          renderAttributes(blueprint);
       }
       // ** Here we add the Element to the parentElement, if there is an Element.
       if (element !== undefined) {
@@ -1612,9 +1621,7 @@
       // ** Here we add the collection of Elements if there is a collection.
       if (collection !== undefined) {
           for (let x of collection) {
-              renderBlueprints([x], parentElement, parentChildBlueprints, [
-                  blueprintIndex,
-              ]);
+              renderBlueprints([x], parentElement, parentChildBlueprints, [blueprintIndex]);
           }
       }
       // ** Here we handle the children of this Element, if it has any.
@@ -1933,7 +1940,7 @@
           scope,
           parentBlueprint,
           _rootScope,
-          isSVG,
+          isSVG
       });
       // ** We need to replace this previous IfBlueprint as its not longer the correct context.
       if (parentBlueprint !== null) {
@@ -1973,10 +1980,7 @@
       }
       mIf.blueprinted = true;
       const { blueprintList, blueprintIndex } = getBlueprintIndex(newBlueprint);
-      parentElement !== undefined &&
-          renderBlueprints([newBlueprint], parentElement, blueprintList, [
-              blueprintIndex,
-          ]);
+      parentElement !== undefined && renderBlueprints([newBlueprint], parentElement, blueprintList, [blueprintIndex]);
       return { newState, newlyInserted };
   };
   const fromFalseToTrue = (blueprint, parentElement, parentBlueprintList, blueprintIndex) => {
@@ -1986,13 +1990,16 @@
       }
       if (collection !== undefined) {
           for (let x of collection) {
-              renderBlueprints([x], parentElement, parentBlueprintList, [
-                  blueprintIndex,
-              ]);
+              renderBlueprints([x], parentElement, parentBlueprintList, [blueprintIndex]);
           }
       }
   };
   const fromTrueToFalse = (blueprint) => {
+      var _a;
+      const { isComponent, scope } = blueprint;
+      if (isComponent) {
+          (_a = scope.onremove) === null || _a === void 0 ? void 0 : _a.call(scope, { scope });
+      }
       removeList([blueprint]);
   };
   const stateShift = (blueprint, parentElement, parentBlueprintList, blueprintIndex, mIf) => {
@@ -2015,7 +2022,7 @@
                   return fromFalseNotBlueprintedToTrue(blueprint, parentElement, {
                       mIf,
                       newState,
-                      newlyInserted,
+                      newlyInserted
                   });
               }
               else {
@@ -3274,129 +3281,6 @@
       ])),
   ]);
 
-  const resolveColours$1 = (colours) => {
-      const output = [];
-      if (colours === undefined)
-          return output;
-      const parts = colours.split(";");
-      parts.forEach((colour, index) => {
-          if (index === 0 || index === parts.length - 1)
-              return;
-          const _colour = `rgb(${colour
-            .replace(/[a-z]/g, "")
-            .replace(/(?!^)[\\]/g, ", ")
-            .replace(/\\/g, "")})`;
-          output.push(_colour);
-      });
-      return output;
-  };
-  const getColours = (colours) => {
-      return colours
-          .map((x) => {
-          const [r, g, b] = x.replace("rgb(", "").replace(/[)\s]/g, "").split(",");
-          return `\\red${r}\\green${g}\\blue${b}`;
-      })
-          .join(";");
-  };
-  const resolveSaveContent = (lines) => {
-      const colours = [];
-      const appContent = lines
-          .map(({ content, styles }) => {
-          if (styles["font-weight"] === "bold") {
-              content = "\\b " + content + "\\b0";
-          }
-          if (styles["font-style"] === "italic") {
-              content = "\\i " + content + "\\i0";
-          }
-          if (styles["text-decoration"] === "underline") {
-              content = "\\ul " + content + "\\ulnone";
-          }
-          if (styles["color"] !== undefined) {
-              const colour = styles["color"];
-              const colourIndex = colours.findIndex((x) => x === colour);
-              if (colourIndex !== -1) {
-                  content = `\\cf${colourIndex + 1} ${content}\\cf0`;
-              }
-              else {
-                  colours.push(colour);
-                  const colourIndex = colours.length - 1;
-                  content = `\\cf${colourIndex + 1} ${content}\\cf0`;
-              }
-          }
-          return `${content}\\par`;
-      })
-          .join("\n");
-      return {
-          appContent,
-          coloursLine: colours.length === 0
-              ? undefined
-              : `{\\colortbl ;${getColours(colours)};}`,
-      };
-  };
-
-  const lineId = { index: 0 };
-  const defaultFontSize = 11;
-
-  class ListStore extends Store {
-      constructor() {
-          super({
-              filePathName: null,
-              contentFromFile: null,
-              lines: [],
-              currentIndex: null,
-              lastCurrentIndex: null,
-              colours: {},
-              fontSize: defaultFontSize,
-              listElementRef: null,
-              textareaContent: new Resolver(() => {
-                  return listStore.lines.map((x) => x.content).join("\n");
-              }),
-              doNothing(event) {
-                  event.preventDefault();
-              }
-          });
-      }
-  }
-  const listStore = new ListStore();
-
-  const resolveSaveColours = (coloursLine) => {
-      const hasFileColoursIndex = listStore.contentFromFile.findIndex((x) => x.includes("\\colortbl"));
-      // ** File HAS colours AND colours ARE defined in app.
-      if (hasFileColoursIndex !== -1 && coloursLine !== undefined) {
-          listStore.contentFromFile.splice(hasFileColoursIndex, 1, coloursLine);
-      }
-      // ** File DOES NOT HAVE colours AND colours ARE defined in app.
-      else if (hasFileColoursIndex === -1 && coloursLine !== undefined) {
-          listStore.contentFromFile.splice(1, 0, coloursLine);
-      }
-      // ** File HAS colours AND colours ARE NOT defined in app.
-      else if (hasFileColoursIndex !== -1 && coloursLine === undefined) {
-          listStore.contentFromFile.splice(hasFileColoursIndex, 1);
-      }
-  };
-
-  const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
-  const saveToFile = () => {
-      const { lines, filePathName, fontSize } = listStore;
-      const { appContent, coloursLine } = resolveSaveContent(lines);
-      resolveSaveColours(coloursLine);
-      const fs = fontSize * 2;
-      const _contentLinesBeforeContent = [
-          "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
-          "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
-          `\\pard\\sl240\\slmult1\\f0\\fs${fs}\\lang9\\par`
-      ];
-      if (coloursLine !== undefined) {
-          _contentLinesBeforeContent.splice(1, 0, coloursLine);
-      }
-      const contentLinesBeforeContent = _contentLinesBeforeContent.join("\n");
-      const content = contentLinesBeforeContent + " " + appContent + endOfFileContent;
-      const saveToFile = new CustomEvent("saveToFile", {
-          detail: { content, filePathName }
-      });
-      window.dispatchEvent(saveToFile);
-  };
-
   /******************************************************************************
   Copyright (c) Microsoft Corporation.
 
@@ -3575,6 +3459,129 @@
           .filter(([key, value]) => key !== undefined && value !== undefined)
           .map(([key, value]) => `${key}: ${value}`)
           .join("; ");
+  };
+
+  const resolveColours$1 = (colours) => {
+      const output = [];
+      if (colours === undefined)
+          return output;
+      const parts = colours.split(";");
+      parts.forEach((colour, index) => {
+          if (index === 0 || index === parts.length - 1)
+              return;
+          const _colour = `rgb(${colour
+            .replace(/[a-z]/g, "")
+            .replace(/(?!^)[\\]/g, ", ")
+            .replace(/\\/g, "")})`;
+          output.push(_colour);
+      });
+      return output;
+  };
+  const getColours = (colours) => {
+      return colours
+          .map((x) => {
+          const [r, g, b] = x.replace("rgb(", "").replace(/[)\s]/g, "").split(",");
+          return `\\red${r}\\green${g}\\blue${b}`;
+      })
+          .join(";");
+  };
+  const resolveSaveContent = (lines) => {
+      const colours = [];
+      const appContent = lines
+          .map(({ content, styles }) => {
+          if (styles["font-weight"] === "bold") {
+              content = "\\b " + content + "\\b0";
+          }
+          if (styles["font-style"] === "italic") {
+              content = "\\i " + content + "\\i0";
+          }
+          if (styles["text-decoration"] === "underline") {
+              content = "\\ul " + content + "\\ulnone";
+          }
+          if (styles["color"] !== undefined) {
+              const colour = styles["color"];
+              const colourIndex = colours.findIndex((x) => x === colour);
+              if (colourIndex !== -1) {
+                  content = `\\cf${colourIndex + 1} ${content}\\cf0`;
+              }
+              else {
+                  colours.push(colour);
+                  const colourIndex = colours.length - 1;
+                  content = `\\cf${colourIndex + 1} ${content}\\cf0`;
+              }
+          }
+          return `${content}\\par`;
+      })
+          .join("\n");
+      return {
+          appContent,
+          coloursLine: colours.length === 0
+              ? undefined
+              : `{\\colortbl ;${getColours(colours)};}`,
+      };
+  };
+
+  const lineId = { index: 0 };
+  const defaultFontSize = 11;
+
+  class ListStore extends Store {
+      constructor() {
+          super({
+              filePathName: null,
+              contentFromFile: null,
+              lines: [],
+              currentIndex: null,
+              lastCurrentIndex: null,
+              colours: {},
+              fontSize: defaultFontSize,
+              listElementRef: null,
+              textareaContent: new Resolver(() => {
+                  return listStore.lines.map((x) => x.content).join("\n");
+              }),
+              doNothing(event) {
+                  event.preventDefault();
+              }
+          });
+      }
+  }
+  const listStore = new ListStore();
+
+  const resolveSaveColours = (coloursLine) => {
+      const hasFileColoursIndex = listStore.contentFromFile.findIndex((x) => x.includes("\\colortbl"));
+      // ** File HAS colours AND colours ARE defined in app.
+      if (hasFileColoursIndex !== -1 && coloursLine !== undefined) {
+          listStore.contentFromFile.splice(hasFileColoursIndex, 1, coloursLine);
+      }
+      // ** File DOES NOT HAVE colours AND colours ARE defined in app.
+      else if (hasFileColoursIndex === -1 && coloursLine !== undefined) {
+          listStore.contentFromFile.splice(1, 0, coloursLine);
+      }
+      // ** File HAS colours AND colours ARE NOT defined in app.
+      else if (hasFileColoursIndex !== -1 && coloursLine === undefined) {
+          listStore.contentFromFile.splice(hasFileColoursIndex, 1);
+      }
+  };
+
+  const endOfFileContent = "\n" + "}\r" + "\n" + "\u0000";
+  const saveToFile = () => {
+      const { lines, filePathName, fontSize } = listStore;
+      const { appContent, coloursLine } = resolveSaveContent(lines);
+      resolveSaveColours(coloursLine);
+      const fs = fontSize * 2;
+      const _contentLinesBeforeContent = [
+          "{\\rtf1\\ansi\\ansicpg1252\\deff0\\nouicompat\\deflang1033{\\fonttbl{\\f0\\fnil\\fcharset0 Calibri;}}",
+          "{\\*\\generator Riched20 10.0.19041}\\viewkind4\\uc1 ",
+          `\\pard\\sl240\\slmult1\\f0\\fs${fs}\\lang9\\par`
+      ];
+      if (coloursLine !== undefined) {
+          _contentLinesBeforeContent.splice(1, 0, coloursLine);
+      }
+      const contentLinesBeforeContent = _contentLinesBeforeContent.join("\n");
+      const content = contentLinesBeforeContent + " " + appContent + endOfFileContent;
+      const saveToFile = new CustomEvent("saveToFile", {
+          detail: { content, filePathName }
+      });
+      window.dispatchEvent(saveToFile);
   };
 
   const keysHeld = {
@@ -3880,11 +3887,16 @@
                   appStore.isTextarea = !appStore.isTextarea;
                   externalRefresh(appStore);
               },
-              openSearch() {
-                  if (appStore.isSearchOpen)
-                      return;
-                  appStore.isSearchOpen = true;
-                  externalRefresh(appStore);
+              openSearch: function () {
+                  var _a, _b;
+                  return __awaiter$1(this, void 0, void 0, function* () {
+                      if (appStore.isSearchOpen)
+                          return;
+                      appStore.isSearchOpen = true;
+                      externalRefresh(appStore);
+                      yield wait();
+                      (_b = (_a = document["search-form"]) === null || _a === void 0 ? void 0 : _a.searchValue) === null || _b === void 0 ? void 0 : _b.focus();
+                  });
               }
           });
       }
@@ -4268,30 +4280,47 @@
                   "[index]": "_i"
               })
           ])),
-          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;", extendField: {
-                  readonly: true
-              } }))
+          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" }))
       ])
   ]);
 
   class SearchComponent extends MintScope {
       constructor() {
           super();
+          this.searchStartIndex = null;
+          this.currentSearchIndex = null;
           this.close = function () {
               appStore.isSearchOpen = false;
               externalRefresh(appStore);
           };
-          this.runSearch = function (event, element) {
+          this.onSubmit = function (event, element, scope) {
               event.preventDefault();
               const searchValue = element.searchValue.value;
+              scope.runSearch(searchValue);
+          };
+          this.goToNext = function () {
+              this.searchStartIndex = this.currentSearchIndex + 1;
+              const searchValue = document["search-form"].searchValue.value;
+              this.runSearch(searchValue);
+          }.bind(this);
+          this.runSearch = function (searchValue) {
+              var _a;
               if (searchValue === "")
                   return;
-              const index = listStore.lines.findIndex((x) => x.content.includes(searchValue));
-              if (index === -1)
+              const linesSubset = listStore.lines.slice((_a = this.searchStartIndex) !== null && _a !== void 0 ? _a : 0);
+              const _index = linesSubset.findIndex(({ content }) => content.toLowerCase().includes(searchValue.toLowerCase()));
+              if (_index === -1)
                   return;
+              const index = this.searchStartIndex + _index;
+              this.currentSearchIndex = index;
               const liElement = listStore.listElementRef.children[index];
               const offset = liElement.offsetTop;
               appStore.mainListElementRef.scrollTo(0, offset);
+          };
+          this.onremove = function () {
+              this.searchStartIndex = null;
+              this.currentSearchIndex = null;
+              document["search-form"].searchValue.value = "";
           };
       }
   }
@@ -4300,8 +4329,13 @@
           node("h2", { class: "search-bar__header-title" }, "Search"),
           node(Button, { theme: "empty", icon: "times", "[onClick]": "close" })
       ]),
-      node("form", { class: "search-bar__content", "(submit)": "runSearch" }, [
+      node("form", { name: "search-form", class: "search-bar__content", "(submit)": "onSubmit" }, [
           node(Field, { name: "searchValue" }),
+          node(Button, {
+              icon: "arrow-down",
+              class: "search-bar__button",
+              "[onClick]": "goToNext"
+          }),
           node(Button, { type: "submit", icon: "search", class: "search-bar__button" })
       ])
   ]);

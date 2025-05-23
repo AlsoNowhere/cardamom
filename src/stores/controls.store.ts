@@ -1,5 +1,7 @@
 import { MintEvent, refresh, Resolver, Store } from "mint";
 
+import { wait } from "sage";
+
 import { saveToFile } from "../logic/save-to-file.logic";
 
 import { listStore } from "./list.store";
@@ -47,10 +49,12 @@ class ControlsStore extends Store {
         refresh(appStore);
       },
 
-      openSearch() {
+      openSearch: async function () {
         if (appStore.isSearchOpen) return;
         appStore.isSearchOpen = true;
         refresh(appStore);
+        await wait();
+        document["search-form"]?.searchValue?.focus();
       }
     });
   }

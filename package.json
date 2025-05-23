@@ -1,6 +1,6 @@
 {
   "name": "cardamom",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "A rich text editor",
   "main": "./electron/main.js",
   "scripts": {
