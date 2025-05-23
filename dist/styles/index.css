@@ -2531,6 +2531,7 @@ main {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  margin-bottom: 0;
   padding: 0.5rem;
 }
 .search-bar__button {

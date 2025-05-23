@@ -18,6 +18,8 @@ class ListStore extends Store {
 
   doNothing: MintEvent<HTMLFormElement>;
 
+  onTextarea: MintEvent<HTMLTextAreaElement>;
+
   constructor() {
     super({
       filePathName: null,

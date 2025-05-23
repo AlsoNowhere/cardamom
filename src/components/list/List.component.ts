@@ -33,10 +33,7 @@ export const List = component("div", ListComponent, {}, [
       type: "textarea",
       "[value]": "textareaContent",
       labelClass: "list-item",
-      style: "height: 100%;",
-      extendField: {
-        readonly: true
-      }
+      style: "height: 100%;"
     })
   ])
 ]);
