@@ -1,0 +1,19 @@
+.tabs {
+  margin-bottom: @gap;
+
+  &__list {
+    .flex;
+    .list;
+
+    &-item {
+      .flex;
+      justify-content: space-between;
+      min-width: 120px;
+      padding-left: @gap;
+      border-right: 1px solid @blueberry;
+      border-bottom: 1px solid @blueberry;
+      line-height: @size;
+      cursor: pointer;
+    }
+  }
+}

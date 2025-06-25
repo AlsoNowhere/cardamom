@@ -61,7 +61,7 @@ export const Search = component("section", SearchComponent, { class: "search-bar
   node("header", { class: "search-bar__header" }, [
     node("h2", { class: "search-bar__header-title" }, "Search"),
 
-    node(Button, { theme: "empty", icon: "times", "[onClick]": "close" })
+    node(Button, { theme: "empty", icon: "times", class: "search-bar__header-button", "[onClick]": "close" })
   ]),
 
   node("form", { name: "search-form", class: "search-bar__content", "(submit)": "onSubmit" }, [

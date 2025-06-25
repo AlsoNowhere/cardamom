@@ -15,6 +15,9 @@ class TabsStore extends Store {
   constructor() {
     super({
       tabs: new Resolver(() => appStore.openFiles),
+      getClasses: new Resolver(function () {
+        return this._i === appStore.currentFileIndex ? "snow-text" : "black-text";
+      }),
 
       selectTab: function () {
         if (appStore.currentFileIndex === this._i) return;
