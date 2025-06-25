@@ -30,28 +30,6 @@ main {
 }
 
 .main {
-  &__tabs {
-    height: @size;
-    margin-bottom: @gap;
-
-    &-list {
-      .flex;
-      .list;
-
-      &-item {
-        .flex;
-        justify-content: space-between;
-        flex-grow: 1;
-        max-width: 120px;
-        padding-left: @gap;
-        border-right: 1px solid @blueberry;
-        border-bottom: 1px solid @blueberry;
-        line-height: @size;
-        cursor: pointer;
-      }
-    }
-  }
-
   &__controls {
     width: 100%;
 
@@ -63,6 +41,10 @@ main {
       .flex;
       height: @size;
       margin-bottom: @gap;
+
+      &-label {
+        .grid-4;
+      }
     }
 
     &-location {

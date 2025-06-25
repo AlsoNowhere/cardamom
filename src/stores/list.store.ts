@@ -1,4 +1,4 @@
-import { MintEvent, Resolver, Store } from "mint";
+import { MintEvent, Store } from "mint";
 
 import { Line } from "../models/Line.model";
 
@@ -14,8 +14,6 @@ class ListStore extends Store {
   fontSize: number;
   listElementRef: HTMLUListElement;
 
-  textareaContent: Resolver<string>;
-
   doNothing: MintEvent<HTMLFormElement>;
 
   onTextarea: MintEvent<HTMLTextAreaElement>;
@@ -30,10 +28,6 @@ class ListStore extends Store {
       colours: {},
       fontSize: defaultFontSize,
       listElementRef: null,
-
-      textareaContent: new Resolver(() => {
-        return listStore.lines.map((x) => x.content).join("\n");
-      }),
 
       doNothing(event) {
         event.preventDefault();

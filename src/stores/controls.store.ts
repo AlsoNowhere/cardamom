@@ -6,15 +6,21 @@ import { saveToFile } from "../logic/save-to-file.logic";
 
 import { listStore } from "./list.store";
 import { appStore } from "./app.store";
+import { modalsStore } from "./modals.store";
+
+import { QuickLoad } from "../models/QuickLoad.model";
 
 class ControlsStore extends Store {
   hasFileLoaded: Resolver<boolean>;
   fileName: Resolver<string>;
   fileLocation: Resolver<string>;
   isTextareaTheme: Resolver<string>;
+  quickLoadTargets: Resolver<Array<QuickLoad>>;
+  getQuickLoadIndex: Resolver<number>;
+
   doNothing: MintEvent;
   updateFileName: MintEvent<HTMLInputElement>;
-  openFile: () => void;
+  openFile: (defaultPath?: string) => void;
   saveToFile: () => void;
   toggleTextarea: () => void;
 
@@ -28,6 +34,14 @@ class ControlsStore extends Store {
 
       isTextareaTheme: new Resolver(() => (appStore.isTextarea ? "blueberry" : "snow")),
 
+      quickLoadTargets: new Resolver(() => {
+        return appStore.quickLoadTargets;
+      }),
+
+      getQuickLoadIndex: new Resolver(function () {
+        return this._i + 1;
+      }),
+
       doNothing: (event) => event.preventDefault(),
 
       updateFileName: (_, element) => {
@@ -36,8 +50,13 @@ class ControlsStore extends Store {
         listStore.filePathName = newValue;
       },
 
-      openFile: () => {
-        window.dispatchEvent(new Event("loadFromFile"));
+      openFile: (defaultPath?: string) => {
+        const event = new CustomEvent("loadFromFile", {
+          detail: {
+            defaultPath,
+          },
+        });
+        window.dispatchEvent(event);
       },
 
       saveToFile: () => {
@@ -55,7 +74,16 @@ class ControlsStore extends Store {
         refresh(appStore);
         await wait();
         document["search-form"]?.searchValue?.focus();
-      }
+      },
+
+      openQuickLoad() {
+        modalsStore.quickLoadModalState = "open";
+        refresh(modalsStore);
+      },
+
+      openFromFolder() {
+        controlsStore.openFile(this.folderPath);
+      },
     });
   }
 }

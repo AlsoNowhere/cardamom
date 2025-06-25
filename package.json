@@ -1,6 +1,6 @@
 {
   "name": "cardamom",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "A rich text editor",
   "main": "./electron/main.js",
   "scripts": {
@@ -33,5 +33,20 @@
     "rollup": "^2.78.1",
     "tslib": "^2.6.3",
     "typescript": "^4.8.3"
+  },
+  "build": {
+    "fileAssociations": [
+      {
+        "ext": "txt",
+        "name": "Text File",
+        "role": "Editor"
+      },
+      {
+        "ext": "rtf",
+        "name": "Rich Text Format",
+        "role": "Editor",
+        "description": "Rich Text Document"
+      }
+    ]
   }
 }

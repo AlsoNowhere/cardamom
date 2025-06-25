@@ -1,6 +1,4 @@
-import { component, mFor, mIf, MintScope, mRef, node } from "mint";
-
-import { Field } from "thyme";
+import { component, mFor, MintScope, mRef, node } from "mint";
 
 import { ListItem } from "./ListItem.component";
 
@@ -15,25 +13,15 @@ class ListComponent extends MintScope {
 }
 
 export const List = component("div", ListComponent, {}, [
-  node("form", { "(submit)": "doNothing" }, [
-    node(
-      "ul",
-      { ...mIf("!isTextarea"), class: "list", ...mRef("listElementRef") },
-      node("li", { ...mFor("lines"), mKey: "id", class: "list-item" }, [
-        node(ListItem, {
-          "[content]": "content",
-          "[style]": "getStyles",
-          "[index]": "_i"
-        })
-      ])
-    ),
-
-    node(Field, {
-      ...mIf("isTextarea"),
-      type: "textarea",
-      "[value]": "textareaContent",
-      labelClass: "list-item",
-      style: "height: 100%;"
-    })
-  ])
+  node(
+    "ul",
+    { class: "list", ...mRef("listElementRef") },
+    node("li", { ...mFor("lines"), mKey: "id", class: "list-item" }, [
+      node(ListItem, {
+        "[content]": "content",
+        "[style]": "getStyles",
+        "[index]": "_i"
+      })
+    ])
+  )
 ]);

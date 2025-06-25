@@ -12,24 +12,20 @@ class TabsComponent extends MintScope {
   }
 }
 
-export const Tabs = component("div", TabsComponent, { class: "main__tabs" }, [
+export const Tabs = component("div", TabsComponent, { class: "tabs" }, [
   node(
     "ul",
-    { class: "main__tabs-list" },
-    node(
-      "li",
-      { ...mFor("tabs"), mKey: "_i", class: "main__tabs-list-item {currentTabClass}", "(click)": "selectTab" },
-      [
-        span("{fileName}"),
-        node(Button, {
-          theme: "empty",
-          icon: "times",
-          class: "snow-text",
-          square: true,
-          "[onClick]": "removeTab",
-          "[index]": "_i"
-        })
-      ]
-    )
+    { class: "tabs__list" },
+    node("li", { ...mFor("tabs"), mKey: "_i", class: "tabs__list-item {currentTabClass}", "(click)": "selectTab" }, [
+      span("{fileName}"),
+      node(Button, {
+        theme: "empty",
+        icon: "times",
+        class: "margin-left-small {getClasses}",
+        square: true,
+        "[onClick]": "removeTab",
+        "[index]": "_i"
+      })
+    ])
   )
 ]);

@@ -1,6 +1,36 @@
 (function () {
   'use strict';
 
+  /******************************************************************************
+  Copyright (c) Microsoft Corporation.
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+  ***************************************************************************** */
+
+  function __awaiter$1(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  }
+
+  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+  };
+
   class CreateNode {
       constructor(mintNode, props = null, content = null) {
           this.mintNode = mintNode;
@@ -223,7 +253,9 @@
   const resolvePropertyLookup = (target, scope) => {
       var _a;
       if (target === "_children") {
-          return (_a = scope._mintBlueprint.contentFor_children) === null || _a === void 0 ? void 0 : _a.length;
+          const childrenContent = scope._mintBlueprint._childrenContent;
+          const contentLength = (_a = childrenContent === null || childrenContent === void 0 ? void 0 : childrenContent.length) !== null && _a !== void 0 ? _a : 0;
+          return contentLength > 0;
       }
       let _value = scope;
       const lookups = target.split(".");
@@ -563,10 +595,10 @@
   // ** This is then replaced with cloned content from the Component definition.
   // ** This saved content can then be used to replace "_children" where it it defined.
   const getContent = (blueprint) => {
-      const { parentBlueprint, contentFor_children } = blueprint;
+      const { parentBlueprint, _childrenContent } = blueprint;
       // ** If the content is valid then return this.
-      if (contentFor_children !== undefined)
-          return contentFor_children;
+      if (_childrenContent !== undefined)
+          return _childrenContent;
       // ** If the parent does not have valid content then pass undefined, which will be ignored to prevent errors.
       if (parentBlueprint === null)
           return;
@@ -575,9 +607,10 @@
   };
   const resolveChildBlueprints = (blueprint, childBlueprints, isSVG) => {
       const { scope, _rootScope } = blueprint;
+      let childrenContent;
       // ** Here we get the content that should be used to replace "_children".
       // ** This is pre Blueprint generated rated.
-      const childrenContent = getContent(blueprint);
+      childrenContent = getContent(blueprint);
       if (childrenContent !== undefined) {
           // ** If this is the keyword "_children" then replace this with childrenContent.
           // ** As these are blueprints then they will need to be cloned and unique at the render phase.
@@ -593,7 +626,7 @@
                       scope,
                       parentBlueprint: blueprint,
                       _rootScope,
-                      isSVG,
+                      isSVG
                   });
                   // ** Now we insert the Blueprints, replacing "_children".
                   childBlueprints.splice(i, 0, ..._children);
@@ -722,7 +755,7 @@
   }
 
   class ComponentBlueprint extends Blueprint {
-      constructor({ mintNode, fragment, element, orderedProps, props, orderedAttributes, attributes, scope, parentBlueprint, collection, childBlueprints, _rootScope, contentFor_children }) {
+      constructor({ mintNode, fragment, element, orderedProps, props, orderedAttributes, attributes, scope, parentBlueprint, collection, childBlueprints, _rootScope, _childrenContent }) {
           super({
               mintNode,
               scope,
@@ -742,8 +775,8 @@
               this.collection = collection;
           if (!!childBlueprints)
               this.childBlueprints = childBlueprints;
-          if (!!contentFor_children)
-              this.contentFor_children = contentFor_children;
+          if (!!_childrenContent)
+              this._childrenContent = _childrenContent;
           if (element instanceof SVGElement)
               this.isSVG = true;
           this._dev = "Component";
@@ -851,21 +884,21 @@
           _rootScope
       });
       if (!!_children) {
-          blueprint.contentFor_children = [];
+          blueprint._childrenContent = [];
           for (let x of _children) {
-              blueprint.contentFor_children.push(cloneContent(x));
+              blueprint._childrenContent.push(cloneContent(x));
           }
       }
       componentScope._mintBlueprint = blueprint;
       /* Dev */
-      // _DevLogger_("GENERATE", "COMPONENT", blueprint, parentBlueprint);
+      // _DevLogger_("GENERATE", "COMPONENT", blueprint);
       // ** Clone the content so that each Component has unique content from the original definition.
-      const _content = [];
+      const clonedContent = [];
       for (let x of content) {
-          _content.push(cloneContent(x));
+          clonedContent.push(cloneContent(x));
       }
       const _childBlueprints = generateBlueprints({
-          nodes: _content,
+          nodes: clonedContent,
           scope: componentScope,
           parentBlueprint: blueprint,
           _rootScope,
@@ -1702,50 +1735,26 @@
       return new CreateNode(mintNode, props, content);
   }
 
-  class Store {
-      constructor(initialData) {
-          if (!(initialData instanceof Object)) {
-              throw "You must provide an Object to create a new Store.";
-          }
-          const entries = Object.entries(initialData);
-          for (let [key, value] of entries) {
-              if (value instanceof ScopeTransformer) {
-                  value.transform(this, key);
-              }
-              else {
-                  this[key] = value;
-              }
-          }
-          this._component = null;
-          this._keys = Object.keys(initialData);
-          this._data = initialData;
-          Object.seal(this);
+  const externalRefreshBlueprint = (scopeOrBlueprintOrStore) => {
+      let blueprint = undefined;
+      const { _mintBlueprint } = scopeOrBlueprintOrStore;
+      const { _component } = scopeOrBlueprintOrStore;
+      // ** Passed a Blueprint directly
+      if (scopeOrBlueprintOrStore instanceof Blueprint) {
+          blueprint = scopeOrBlueprintOrStore;
       }
-      connect(scope) {
-          this._component = scope;
-          scope._store = this;
-          for (let key of this._keys) {
-              const value = this._data[key];
-              if (value instanceof ScopeTransformer) {
-                  value.transform(scope, key);
-              }
-              else {
-                  Object.defineProperty(scope, key, {
-                      get: () => this[key],
-                      set: (_value) => (this[key] = _value),
-                  });
-              }
-          }
+      // ** Passed IScope
+      else if (!!_mintBlueprint) {
+          blueprint = _mintBlueprint;
       }
-  }
-
-  const externalRefreshBlueprint = (scopeOrBlueprint) => {
-      var _a;
-      const blueprint = scopeOrBlueprint instanceof Blueprint
-          ? scopeOrBlueprint
-          : scopeOrBlueprint instanceof Store
-              ? (_a = scopeOrBlueprint._component) === null || _a === void 0 ? void 0 : _a._mintBlueprint
-              : scopeOrBlueprint._mintBlueprint;
+      // ** Passed Store
+      else if (_component !== undefined) {
+          // ** If this Store is not currently connected to a Component then do nothing.
+          if (_component === null) {
+              return;
+          }
+          blueprint = _component._mintBlueprint;
+      }
       // <@ REMOVE FOR PRODUCTION
       if (blueprint === undefined) {
           throw new Error(`${MINT_ERROR} refresh called using an invalid scope. Blueprint is undefined.`);
@@ -1865,7 +1874,7 @@
       }
   }
 
-  const generateMIf = ({ mIfInstance, _ifValue, node, orderedProps, props, parentScope, parentBlueprint, _rootScope, isSVG, }) => {
+  const generateMIf = ({ mIfInstance, _ifValue, node, orderedProps, props, parentScope, parentBlueprint, _rootScope, isSVG }) => {
       const { mintNode, content } = node;
       const mintElement = mintNode;
       // <@ REMOVE FOR PRODUCTION
@@ -1878,7 +1887,7 @@
       }
       const inverse = _ifValue.charAt(0) === "!";
       const ifValue = inverse ? _ifValue.substring(1) : _ifValue;
-      const result = resolvePropertyLookup(ifValue, parentScope);
+      const result = !!resolvePropertyLookup(ifValue, parentScope);
       const state = inverse ? !result : !!result;
       mIfInstance._mIf = {
           inverse,
@@ -1886,7 +1895,7 @@
           state,
           scope: parentScope,
           blueprinted: state,
-          mintNode: mintNode,
+          mintNode: mintNode
       };
       /* Dev */
       // _DevLogger_("GENERATE", "mIf", mIfInstance._mIf);
@@ -1899,7 +1908,7 @@
               parentBlueprint,
               _rootScope,
               content,
-              isSVG,
+              isSVG
           });
           /* Dev */
           // _DevLogger_("GENERATE", "mIf", that.blueprint, parentBlueprint);
@@ -2290,7 +2299,7 @@
 
   const handleErrorsAndWarnings = (blueprint, mFor) => {
       var _a, _b;
-      const { nodeToClone, orderedProps, props, forListBlueprints, parentBlueprint, _rootScope, isSVG, } = blueprint;
+      const { nodeToClone, orderedProps, props, forListBlueprints, parentBlueprint, _rootScope, isSVG } = blueprint;
       const { blueprintIndex } = getBlueprintIndex(blueprint);
       const childBlueprints = (_a = parentBlueprint === null || parentBlueprint === void 0 ? void 0 : parentBlueprint.childBlueprints) !== null && _a !== void 0 ? _a : _rootScope._rootChildBlueprints;
       const parentScope = (_b = parentBlueprint === null || parentBlueprint === void 0 ? void 0 : parentBlueprint.scope) !== null && _b !== void 0 ? _b : _rootScope;
@@ -2331,7 +2340,7 @@
           childBlueprints,
           parentBlueprint,
           _rootScope,
-          isSVG,
+          isSVG
       };
   };
   const changeElementPosition = (forRender, requiredIndex, forRenders, allElements, options) => {
@@ -2371,8 +2380,8 @@
       }
   };
   const refreshMFor = (blueprint, { _mFor, newlyInserted }) => {
-      var _a;
-      const { forKey, forData, blueprintIndex, parentElement, nodeToClone, orderedProps, props, parentScope, parentBlueprint, forListBlueprints, childBlueprints, _rootScope, isSVG, } = handleErrorsAndWarnings(blueprint, _mFor);
+      var _a, _b, _c;
+      const { forKey, forData, blueprintIndex, parentElement, nodeToClone, orderedProps, props, parentScope, parentBlueprint, forListBlueprints, childBlueprints, _rootScope, isSVG } = handleErrorsAndWarnings(blueprint, _mFor);
       _mFor.forData = forData;
       const newList = forData;
       _mFor.oldForDataLength = newList.length;
@@ -2418,7 +2427,7 @@
               forRenders.push(x);
           }
           else {
-              forRenders.push(generatemForBlueprint(nodeToClone, parentScope, orderedProps, props, nodeToClone.content, parentBlueprint, x, i, _rootScope, isSVG));
+              forRenders.push(generatemForBlueprint(nodeToClone, parentScope, orderedProps, props, _mFor._children, parentBlueprint, x, i, _rootScope, isSVG));
           }
       }
       _mFor.currentForRenders = forRenders;
@@ -2436,12 +2445,18 @@
       }
       // ** Cycle through old list and if its not on the new list then remove this element.
       for (let currentRender of forListBlueprints) {
-          if (!newCurrentForRenders.includes(currentRender) &&
-              currentRender instanceof ElementBlueprint) {
-              const element = currentRender.element;
-              (_a = element === null || element === void 0 ? void 0 : element.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(element);
+          if (!newCurrentForRenders.includes(currentRender)) {
+              if (!currentRender.fragment) {
+                  const element = currentRender.element;
+                  (_a = element === null || element === void 0 ? void 0 : element.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(element);
+              }
+              else {
+                  const collection = currentRender.collection;
+                  removeList(collection);
+              }
           }
       }
+      // ** Cycle through new list and if its not on the old list then add this element.
       for (let targetRender of forRenders) {
           if (!forListBlueprints.includes(targetRender)) {
               const element = targetRender.element;
@@ -2455,12 +2470,11 @@
           if (mintNode === null)
               continue;
           if (!forListBlueprints.includes(targetRender)) {
-              mintNode.render(targetRender, parentElement, childBlueprints, blueprintIndex);
+              (_b = mintNode.render) === null || _b === void 0 ? void 0 : _b.call(mintNode, targetRender, parentElement, childBlueprints, blueprintIndex);
           }
           else {
-              const _refresh = mintNode.refresh;
-              _refresh(targetRender, parentElement, {
-                  newlyInserted,
+              (_c = mintNode.refresh) === null || _c === void 0 ? void 0 : _c.call(mintNode, targetRender, parentElement, {
+                  newlyInserted
               });
           }
       }
@@ -2475,15 +2489,15 @@
       rearrangeElements(forRenders, {
           childBlueprints,
           parentElement,
-          blueprintIndex,
+          blueprintIndex
       });
       return {
           condition: true,
-          value: blueprint,
+          value: blueprint
       };
   };
 
-  const createmForObject = ({ forKey, forValue, mForType, nodeToClone, _children, parentScope, orderedProps, props, parentBlueprint, _rootScope, isSVG, }) => {
+  const createmForObject = ({ forKey, forValue, mForType, nodeToClone, _children, parentScope, orderedProps, props, parentBlueprint, _rootScope, isSVG }) => {
       const initialForData = resolvePropertyLookup(forValue, parentScope);
       if (!(initialForData instanceof Array) || initialForData === undefined) {
           throw new Error(`${MINT_ERROR} Must pass in an Array or undefined to mFor (mFor: "${forValue}")`);
@@ -2515,9 +2529,10 @@
           currentForRenders,
           oldForDataLength: forData.length,
           mForType,
+          _children
       };
   };
-  const generateMFor = ({ mForInstance, forValue, node, orderedProps, props, _children, parentScope, parentBlueprint, _rootScope, isSVG, }) => {
+  const generateMFor = ({ mForInstance, forValue, node, orderedProps, props, _children, parentScope, parentBlueprint, _rootScope, isSVG }) => {
       var _a;
       const nodeToClone = node.mintNode;
       if (mForInstance.generated)
@@ -2561,7 +2576,7 @@
           props,
           parentBlueprint,
           _rootScope,
-          isSVG,
+          isSVG
       });
       const forListBlueprints = mForInstance._mFor.currentForRenders;
       const runRefresh = (blueprint, options) => {
@@ -2580,11 +2595,11 @@
           _rootScope,
           forListBlueprints,
           // collection: collection as Array<Blueprint>,
-          isSVG: isSVG || undefined,
+          isSVG: isSVG || undefined
       });
       return {
           condition: true,
-          value: mForInstance.blueprint,
+          value: mForInstance.blueprint
       };
   };
 
@@ -2690,6 +2705,43 @@
       return { mRef: new MintRef(refValue) };
   };
 
+  class Store {
+      constructor(initialData) {
+          if (!(initialData instanceof Object)) {
+              throw "You must provide an Object to create a new Store.";
+          }
+          const entries = Object.entries(initialData);
+          for (let [key, value] of entries) {
+              if (value instanceof ScopeTransformer) {
+                  value.transform(this, key);
+              }
+              else {
+                  this[key] = value;
+              }
+          }
+          this._component = null;
+          this._keys = Object.keys(initialData);
+          this._data = initialData;
+          Object.seal(this);
+      }
+      connect(scope) {
+          this._component = scope;
+          scope._store = this;
+          for (let key of this._keys) {
+              const value = this._data[key];
+              if (value instanceof ScopeTransformer) {
+                  value.transform(scope, key);
+              }
+              else {
+                  Object.defineProperty(scope, key, {
+                      get: () => this[key],
+                      set: (_value) => (this[key] = _value),
+                  });
+              }
+          }
+      }
+  }
+
   const _get = (target, value) => {
       let output = target;
       const trail = value.split(".");
@@ -2747,6 +2799,156 @@
 
   const div = (attributesOrContent, _content) => {
       return quickElement("div", attributesOrContent, _content);
+  };
+
+  const wait = (time = 0) => new Promise((resolve) => {
+      setTimeout(() => {
+          resolve();
+      }, time);
+  });
+
+  /******************************************************************************
+  Copyright (c) Microsoft Corporation.
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+  PERFORMANCE OF THIS SOFTWARE.
+  ***************************************************************************** */
+
+  function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  }
+
+  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+  };
+
+  const time = 300;
+  const timeToWait = 3000;
+
+  class Toaster {
+      constructor(target = document.body) {
+          this.toast = (message, options, alternateElementTarget) => __awaiter(this, void 0, void 0, function* () {
+              var _a;
+              const _previousTarget = this.target;
+              if (alternateElementTarget !== undefined) {
+                  this.target = alternateElementTarget;
+              }
+              const theme = typeof options === "string" ? options : (_a = options === null || options === void 0 ? void 0 : options.theme) !== null && _a !== void 0 ? _a : "blueberry";
+              const { hasButton, clickToClose, linger, classes, buttonClasses } = typeof options === "string" ? {} : options;
+              if (this.toasts.length === 0) {
+                  this.mountToastContainer();
+              }
+              this.target = _previousTarget;
+              const toast = { element: document.createElement("div") };
+              toast.element.classList.add("toast", `toast__${theme}`, ...(classes || []));
+              const toastMessageSpan = document.createElement("span");
+              toastMessageSpan.textContent = message;
+              const toastMessageButton = document.createElement("button");
+              toastMessageButton.classList.add("toast__button", "empty", ...(buttonClasses || []));
+              {
+                  const buttonSpan = document.createElement("span");
+                  buttonSpan.classList.add("fa", "fa-times");
+                  toastMessageButton.append(buttonSpan);
+              }
+              const remove = () => __awaiter(this, void 0, void 0, function* () {
+                  var _b, _c;
+                  delete toast.remove;
+                  if (clickToClose === true) {
+                      toast.element.removeEventListener("click", remove);
+                  }
+                  toastMessageButton.removeEventListener("click", remove);
+                  toast.element.classList.add("fade-out");
+                  yield wait(time);
+                  (_b = toast.element.parentElement) === null || _b === void 0 ? void 0 : _b.removeChild(toast.element);
+                  this.toasts.splice(this.toasts.indexOf(toast, 1));
+                  if (this.toasts.length == 0) {
+                      this.index = 0;
+                      (_c = this.toastContainer.parentElement) === null || _c === void 0 ? void 0 : _c.removeChild(this.toastContainer);
+                  }
+              });
+              toast.remove = remove;
+              if (clickToClose === true) {
+                  toast.element.addEventListener("click", remove);
+              }
+              toastMessageButton.addEventListener("click", remove);
+              toast.element.append(toastMessageSpan);
+              if (hasButton === undefined) {
+                  toast.element.append(toastMessageButton);
+              }
+              this.toastContainer.append(toast.element);
+              this.toasts.push(toast);
+              this.index++;
+              const _timeToWait = typeof linger !== "number"
+                  ? timeToWait
+                  : (() => {
+                      // ** TS should accept a number as an argument here but....... you know!
+                      if (linger < 0 || parseInt(linger + "") !== linger) {
+                          console.error("Must provide a positive integer for the property 'linger'.");
+                          return timeToWait;
+                      }
+                      return linger;
+                  })();
+              yield wait(_timeToWait);
+              remove();
+          });
+          this.index = 0;
+          this.toasts = [];
+          this.target = target;
+          {
+              const toastContainer = document.createElement("div");
+              toastContainer.classList.add("toast-container");
+              this.toastContainer = toastContainer;
+          }
+      }
+      getToastIndex(index) {
+          return `toast--piece--${index}`;
+      }
+      mountToastContainer() {
+          this.target.append(this.toastContainer);
+      }
+  }
+  const toaster = new Toaster(document.body);
+  const toast = (message, theme = "blueberry", alternateElementTarget) => toaster.toast(message, theme, alternateElementTarget);
+
+  const resolveLeadingZeroes = (item) => {
+      if (typeof item === "number") {
+          if (item < 10)
+              return "0" + item;
+          return "" + item;
+      }
+      else {
+          if (item.length === 1)
+              return "0" + item;
+          return item;
+      }
+  };
+  const dateMap = new Map();
+  dateMap.set("dd/mm/yyyy", ({ d, m, y }) => `${resolveLeadingZeroes(d)}/${resolveLeadingZeroes(m)}/${y}`);
+  dateMap.set("dd/mm/yyyy hh:mm", ({ d, m, y, h, min }) => `${resolveLeadingZeroes(d)}/${resolveLeadingZeroes(m)}/${y} ${resolveLeadingZeroes(h)}:${resolveLeadingZeroes(min)}`);
+  dateMap.set("yyyy-mm-dd", ({ d, m, y }) => `${y}-${resolveLeadingZeroes(m)}-${resolveLeadingZeroes(d)}`);
+  dateMap.set("dd-mm-yyyy", ({ d, m, y }) => `${resolveLeadingZeroes(d)}-${resolveLeadingZeroes(m)}-${y}`);
+  dateMap.set("dd-mm-yyyy hh:mm", ({ d, m, y, h, min }) => `${resolveLeadingZeroes(d)}-${resolveLeadingZeroes(m)}-${y} ${resolveLeadingZeroes(h)}:${resolveLeadingZeroes(min)}`);
+
+  const styles = (obj) => {
+      return Object.entries(obj)
+          .filter(([key, value]) => key !== undefined && value !== undefined)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join("; ");
   };
 
   class ButtonComponent extends MintScope {
@@ -2864,7 +3066,8 @@
           // this.onBlur = null;
           this.extendField = {};
           this._labelClass = new Resolver(function () {
-              return this.labelClass + (this.large ? " large" : "");
+              var _a;
+              return ((_a = this.labelClass) !== null && _a !== void 0 ? _a : "") + (this.large ? " large" : "");
           });
           this._inputClass = new Resolver(function () {
               return this.class + (this.large ? " large" : "");
@@ -3077,42 +3280,37 @@
       node(FieldSelect, Object.assign(Object.assign(Object.assign({ mIf: mIf("isSelect") }, mExtend("extendScope")), passProps), { "[options]": "options" })),
   ]);
 
-  const modalTime = 500;
-
-  const closeModal = (target, prop) => {
-      target[prop] = "open closing";
-      externalRefresh(target);
-      setTimeout(() => {
-          target[prop] = "";
-          externalRefresh(target);
-      }, modalTime);
-  };
-
   class ModalComponent extends MintScope {
       constructor() {
           super();
           this.state = "";
           this.theme = "smoke";
           this.class = "";
+          this.style = "";
           this.hasTitle = new Resolver(function () {
               return this.title !== undefined;
           });
           this.clickOnBackground = function () {
-              if (this.closeOnBackgroundClick !== true)
-                  return;
-              if (this._store instanceof Store &&
-                  typeof this.storeTarget === "string") {
-                  closeModal(this._store, this.storeTarget);
+              if (this.closeOnBackgroundClick instanceof Function) {
+                  this.closeOnBackgroundClick();
               }
-              else {
-                  closeModal(this, "state");
+              // if (!(this.closeOnBackgroundClick instanceof Function)) return;
+              // if (this._store instanceof Store && typeof this.storeTarget === "string") {
+              //   closeModal(this._store, this.storeTarget);
+              // } else {
+              //   closeModal(this, "state");
+              // }
+          };
+          this.clickOnContent = function (event) {
+              if (this.closeOnBackgroundClick instanceof Function) {
+                  event.stopPropagation();
               }
           };
       }
   }
-  component("article", ModalComponent, { class: "modal {state}", "(click)": "clickOnBackground" }, node("div", { class: "modal__content {class}" }, [
+  const Modal = component("article", ModalComponent, { class: "modal {state}", "(click)": "clickOnBackground" }, node("div", { class: "modal__content {class}", "[style]": "style", "(click)": "clickOnContent" }, [
       node("header", { mIf: mIf("hasTitle"), class: "modal__header {theme}" }, node("h2", null, "{title}")),
-      "_children",
+      "_children"
   ]));
 
   const exact = (target, hash) => {
@@ -3247,6 +3445,17 @@
       node("tbody", null, node("tr", Object.assign(Object.assign({}, mFor("rows")), { mKey: "id" }), node("td", Object.assign(Object.assign({}, mFor("columns")), { mKey: "id" }), "{cell}"))),
   ]);
 
+  const modalTime = 500;
+
+  const closeModal = (target, prop) => {
+      target[prop] = "open closing";
+      externalRefresh(target);
+      setTimeout(() => {
+          target[prop] = "";
+          externalRefresh(target);
+      }, modalTime);
+  };
+
   const size = 8;
   const lineProps = (x1, x2) => ({
       x1,
@@ -3280,186 +3489,6 @@
           node("line", lineProps(32 - size, size)),
       ])),
   ]);
-
-  /******************************************************************************
-  Copyright (c) Microsoft Corporation.
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted.
-
-  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-  PERFORMANCE OF THIS SOFTWARE.
-  ***************************************************************************** */
-
-  function __awaiter$1(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  }
-
-  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-  };
-
-  const wait = (time = 0) => new Promise((resolve) => {
-      setTimeout(() => {
-          resolve();
-      }, time);
-  });
-
-  /******************************************************************************
-  Copyright (c) Microsoft Corporation.
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted.
-
-  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-  PERFORMANCE OF THIS SOFTWARE.
-  ***************************************************************************** */
-
-  function __awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  }
-
-  typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
-    var e = new Error(message);
-    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
-  };
-
-  const time = 300;
-  const timeToWait = 3000;
-
-  class Toaster {
-      constructor(target = document.body) {
-          this.toast = (message, options, alternateElementTarget) => __awaiter(this, void 0, void 0, function* () {
-              var _a;
-              const _previousTarget = this.target;
-              if (alternateElementTarget !== undefined) {
-                  this.target = alternateElementTarget;
-              }
-              const theme = typeof options === "string" ? options : (_a = options === null || options === void 0 ? void 0 : options.theme) !== null && _a !== void 0 ? _a : "blueberry";
-              const { hasButton, clickToClose, linger, classes, buttonClasses } = typeof options === "string" ? {} : options;
-              if (this.toasts.length === 0) {
-                  this.mountToastContainer();
-              }
-              this.target = _previousTarget;
-              const toast = { element: document.createElement("div") };
-              toast.element.classList.add("toast", `toast__${theme}`, ...(classes || []));
-              const toastMessageSpan = document.createElement("span");
-              toastMessageSpan.textContent = message;
-              const toastMessageButton = document.createElement("button");
-              toastMessageButton.classList.add("toast__button", "empty", ...(buttonClasses || []));
-              {
-                  const buttonSpan = document.createElement("span");
-                  buttonSpan.classList.add("fa", "fa-times");
-                  toastMessageButton.append(buttonSpan);
-              }
-              const remove = () => __awaiter(this, void 0, void 0, function* () {
-                  var _b, _c;
-                  delete toast.remove;
-                  if (clickToClose === true) {
-                      toast.element.removeEventListener("click", remove);
-                  }
-                  toastMessageButton.removeEventListener("click", remove);
-                  toast.element.classList.add("fade-out");
-                  yield wait(time);
-                  (_b = toast.element.parentElement) === null || _b === void 0 ? void 0 : _b.removeChild(toast.element);
-                  this.toasts.splice(this.toasts.indexOf(toast, 1));
-                  if (this.toasts.length == 0) {
-                      this.index = 0;
-                      (_c = this.toastContainer.parentElement) === null || _c === void 0 ? void 0 : _c.removeChild(this.toastContainer);
-                  }
-              });
-              toast.remove = remove;
-              if (clickToClose === true) {
-                  toast.element.addEventListener("click", remove);
-              }
-              toastMessageButton.addEventListener("click", remove);
-              toast.element.append(toastMessageSpan);
-              if (hasButton === undefined) {
-                  toast.element.append(toastMessageButton);
-              }
-              this.toastContainer.append(toast.element);
-              this.toasts.push(toast);
-              this.index++;
-              const _timeToWait = typeof linger !== "number"
-                  ? timeToWait
-                  : (() => {
-                      // ** TS should accept a number as an argument here but....... you know!
-                      if (linger < 0 || parseInt(linger + "") !== linger) {
-                          console.error("Must provide a positive integer for the property 'linger'.");
-                          return timeToWait;
-                      }
-                      return linger;
-                  })();
-              yield wait(_timeToWait);
-              remove();
-          });
-          this.index = 0;
-          this.toasts = [];
-          this.target = target;
-          {
-              const toastContainer = document.createElement("div");
-              toastContainer.classList.add("toast-container");
-              this.toastContainer = toastContainer;
-          }
-      }
-      getToastIndex(index) {
-          return `toast--piece--${index}`;
-      }
-      mountToastContainer() {
-          this.target.append(this.toastContainer);
-      }
-  }
-  const toaster = new Toaster(document.body);
-  const toast = (message, theme = "blueberry", alternateElementTarget) => toaster.toast(message, theme, alternateElementTarget);
-
-  const resolveLeadingZeroes = (item) => {
-      if (typeof item === "number") {
-          if (item < 10)
-              return "0" + item;
-          return "" + item;
-      }
-      else {
-          if (item.length === 1)
-              return "0" + item;
-          return item;
-      }
-  };
-  const dateMap = new Map();
-  dateMap.set("dd/mm/yyyy", ({ d, m, y }) => `${resolveLeadingZeroes(d)}/${resolveLeadingZeroes(m)}/${y}`);
-  dateMap.set("dd/mm/yyyy hh:mm", ({ d, m, y, h, min }) => `${resolveLeadingZeroes(d)}/${resolveLeadingZeroes(m)}/${y} ${resolveLeadingZeroes(h)}:${resolveLeadingZeroes(min)}`);
-  dateMap.set("yyyy-mm-dd", ({ d, m, y }) => `${y}-${resolveLeadingZeroes(m)}-${resolveLeadingZeroes(d)}`);
-  dateMap.set("dd-mm-yyyy", ({ d, m, y }) => `${resolveLeadingZeroes(d)}-${resolveLeadingZeroes(m)}-${y}`);
-  dateMap.set("dd-mm-yyyy hh:mm", ({ d, m, y, h, min }) => `${resolveLeadingZeroes(d)}-${resolveLeadingZeroes(m)}-${y} ${resolveLeadingZeroes(h)}:${resolveLeadingZeroes(min)}`);
-
-  const styles = (obj) => {
-      return Object.entries(obj)
-          .filter(([key, value]) => key !== undefined && value !== undefined)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join("; ");
-  };
 
   const resolveColours$1 = (colours) => {
       const output = [];
@@ -3523,6 +3552,7 @@
 
   const lineId = { index: 0 };
   const defaultFontSize = 11;
+  const storageKey = "cardamom-local-storage";
 
   class ListStore extends Store {
       constructor() {
@@ -3535,9 +3565,6 @@
               colours: {},
               fontSize: defaultFontSize,
               listElementRef: null,
-              textareaContent: new Resolver(() => {
-                  return listStore.lines.map((x) => x.content).join("\n");
-              }),
               doNothing(event) {
                   event.preventDefault();
               }
@@ -3841,28 +3868,61 @@
       });
   };
 
+  class QuickLoad {
+      constructor(folderPath) {
+          this.folderPath = folderPath;
+      }
+  }
+
+  const loadLocal = () => {
+      var _a;
+      const data = (_a = localStorage.getItem(storageKey)) !== null && _a !== void 0 ? _a : `{ "quickLoad": [] }`;
+      const parsed = JSON.parse(data);
+      const { quickLoad } = parsed;
+      const items = quickLoad.map((x) => new QuickLoad(x.folderPath));
+      appStore.quickLoadTargets = items;
+  };
+  const saveLocal = () => {
+      const data = { quickLoad: appStore.quickLoadTargets };
+      localStorage.setItem(storageKey, JSON.stringify(data));
+  };
+
   class AppStore extends Store {
       constructor() {
           super({
               isTextarea: false,
               isSearchOpen: false,
               mainListElementRef: null,
-              isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
               openFiles: [],
               currentFileIndex: -1,
+              quickLoadTargets: [],
+              textareaContent: new Resolver(() => {
+                  return listStore.lines.map((x) => x.content).join("\n");
+              }),
+              isTextareaOverflow: new Resolver(() => (appStore.isTextarea ? "hidden" : "auto")),
               currentTabClass: new Resolver(function () {
                   return this._i === appStore.currentFileIndex ? "blueberry-bg snow-text" : "";
               }),
               oninit: () => __awaiter$1(this, void 0, void 0, function* () {
+                  loadLocal();
+                  yield wait();
+                  externalRefresh(controlsStore);
                   addKeyEvents();
                   addLoadFileEvent();
-                  yield wait();
-                  externalRefresh(listStore);
-              })
+              }),
           });
       }
   }
   const appStore = new AppStore();
+
+  class ModalsStore extends Store {
+      constructor() {
+          super({
+              quickLoadModalState: "closed"
+          });
+      }
+  }
+  const modalsStore = new ModalsStore();
 
   class ControlsStore extends Store {
       constructor() {
@@ -3871,14 +3931,25 @@
               fileName: new Resolver(() => listStore.filePathName.split("\\").pop().split(".").shift()),
               fileLocation: new Resolver(() => listStore.filePathName.split("\\").slice(0, -1).join("\\")),
               isTextareaTheme: new Resolver(() => (appStore.isTextarea ? "blueberry" : "snow")),
+              quickLoadTargets: new Resolver(() => {
+                  return appStore.quickLoadTargets;
+              }),
+              getQuickLoadIndex: new Resolver(function () {
+                  return this._i + 1;
+              }),
               doNothing: (event) => event.preventDefault(),
               updateFileName: (_, element) => {
                   const filePath = listStore.filePathName.split("\\").slice(0, -1).join("\\");
                   const newValue = filePath + "\\" + element.value + ".rtf";
                   listStore.filePathName = newValue;
               },
-              openFile: () => {
-                  window.dispatchEvent(new Event("loadFromFile"));
+              openFile: (defaultPath) => {
+                  const event = new CustomEvent("loadFromFile", {
+                      detail: {
+                          defaultPath,
+                      },
+                  });
+                  window.dispatchEvent(event);
               },
               saveToFile: () => {
                   saveToFile();
@@ -3897,7 +3968,14 @@
                       yield wait();
                       (_b = (_a = document["search-form"]) === null || _a === void 0 ? void 0 : _a.searchValue) === null || _b === void 0 ? void 0 : _b.focus();
                   });
-              }
+              },
+              openQuickLoad() {
+                  modalsStore.quickLoadModalState = "open";
+                  externalRefresh(modalsStore);
+              },
+              openFromFolder() {
+                  controlsStore.openFile(this.folderPath);
+              },
           });
       }
   }
@@ -3912,13 +3990,14 @@
   const Controls = component("section", ControlsComponent, { class: "main__controls-section" }, [
       node("form", {
           class: "main__controls-form",
-          "(submit)": "doNothing"
+          "(submit)": "doNothing",
       }, node("<>", Object.assign({}, mIf("hasFileLoaded")), [
           node(Field, {
+              labelClass: "main__controls-form-label",
               "[value]": "fileName",
-              "[onInput]": "updateFileName"
+              "[onInput]": "updateFileName",
           }),
-          node("span", { class: "main__controls-location" }, "{fileLocation}")
+          node("span", { class: "main__controls-location" }, "{fileLocation}"),
       ])),
       div([
           node(Button, {
@@ -3926,7 +4005,7 @@
               class: "margin-right-small",
               title: "Open file",
               square: true,
-              "[onClick]": "openFile"
+              "[onClick]": "openFile",
           }),
           node(Button, {
               theme: "blueberry",
@@ -3934,7 +4013,7 @@
               class: "margin-right-small",
               title: "Save content to file",
               square: true,
-              "[onClick]": "saveToFile"
+              "[onClick]": "saveToFile",
           }),
           node(Button, {
               "[theme]": "isTextareaTheme",
@@ -3942,16 +4021,24 @@
               class: "margin-right-small",
               title: "Toggle textarea",
               square: true,
-              "[onClick]": "toggleTextarea"
+              "[onClick]": "toggleTextarea",
           }),
           node(Button, {
               icon: "search",
               class: "margin-right-small",
               title: "Open search",
               square: true,
-              "[onClick]": "openSearch"
-          })
-      ])
+              "[onClick]": "openSearch",
+          }),
+          node(Button, {
+              icon: "random",
+              class: "margin-right-small",
+              title: "Add quick load",
+              square: true,
+              "[onClick]": "openQuickLoad",
+          }),
+          node(Button, Object.assign(Object.assign({}, mFor("quickLoadTargets")), { mKey: "_i", "[label]": "getQuickLoadIndex", square: true, "[onClick]": "openFromFolder" })),
+      ]),
   ]);
 
   const changeStyle = (style, value, toggle = false) => {
@@ -4272,16 +4359,13 @@
       }
   }
   const List = component("div", ListComponent, {}, [
-      node("form", { "(submit)": "doNothing" }, [
-          node("ul", Object.assign(Object.assign(Object.assign({}, mIf("!isTextarea")), { class: "list" }), mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
-              node(ListItem, {
-                  "[content]": "content",
-                  "[style]": "getStyles",
-                  "[index]": "_i"
-              })
-          ])),
-          node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;" }))
-      ])
+      node("ul", Object.assign({ class: "list" }, mRef("listElementRef")), node("li", Object.assign(Object.assign({}, mFor("lines")), { mKey: "id", class: "list-item" }), [
+          node(ListItem, {
+              "[content]": "content",
+              "[style]": "getStyles",
+              "[index]": "_i"
+          })
+      ]))
   ]);
 
   class SearchComponent extends MintScope {
@@ -4327,7 +4411,7 @@
   const Search = component("section", SearchComponent, { class: "search-bar" }, [
       node("header", { class: "search-bar__header" }, [
           node("h2", { class: "search-bar__header-title" }, "Search"),
-          node(Button, { theme: "empty", icon: "times", "[onClick]": "close" })
+          node(Button, { theme: "empty", icon: "times", class: "search-bar__header-button", "[onClick]": "close" })
       ]),
       node("form", { name: "search-form", class: "search-bar__content", "(submit)": "onSubmit" }, [
           node(Field, { name: "searchValue" }),
@@ -4344,6 +4428,9 @@
       constructor() {
           super({
               tabs: new Resolver(() => appStore.openFiles),
+              getClasses: new Resolver(function () {
+                  return this._i === appStore.currentFileIndex ? "snow-text" : "black-text";
+              }),
               selectTab: function () {
                   if (appStore.currentFileIndex === this._i)
                       return;
@@ -4377,18 +4464,96 @@
           tabsStore.connect(this);
       }
   }
-  const Tabs = component("div", TabsComponent, { class: "main__tabs" }, [
-      node("ul", { class: "main__tabs-list" }, node("li", Object.assign(Object.assign({}, mFor("tabs")), { mKey: "_i", class: "main__tabs-list-item {currentTabClass}", "(click)": "selectTab" }), [
+  const Tabs = component("div", TabsComponent, { class: "tabs" }, [
+      node("ul", { class: "tabs__list" }, node("li", Object.assign(Object.assign({}, mFor("tabs")), { mKey: "_i", class: "tabs__list-item {currentTabClass}", "(click)": "selectTab" }), [
           span("{fileName}"),
           node(Button, {
               theme: "empty",
               icon: "times",
-              class: "snow-text",
+              class: "margin-left-small {getClasses}",
               square: true,
               "[onClick]": "removeTab",
               "[index]": "_i"
           })
       ]))
+  ]);
+
+  class ManageQuickLoadComponent extends MintScope {
+      constructor() {
+          super();
+          const that = this;
+          this.quickLoadTargets = new Resolver(() => appStore.quickLoadTargets);
+          this.folderPathInputRef = new UpwardRef(null);
+          this.addQuickLoad = function (event) {
+              var _a;
+              event.preventDefault();
+              if (!(this.folderPathInputRef.ref instanceof HTMLInputElement))
+                  return;
+              const value = (_a = this.folderPathInputRef.ref) === null || _a === void 0 ? void 0 : _a.value;
+              if (!value)
+                  return;
+              const newItem = new QuickLoad(value);
+              appStore.quickLoadTargets.push(newItem);
+              this.folderPathInputRef.ref.value = "";
+              saveLocal();
+              externalRefresh(that);
+          };
+          this.removeItem = function () {
+              appStore.quickLoadTargets.splice(this.index, 1);
+              saveLocal();
+              externalRefresh(that);
+          };
+          this.closeQuickLoadModal = () => {
+              closeModal(modalsStore, "quickLoadModalState");
+              externalRefresh(controlsStore);
+          };
+      }
+  }
+  const ManageQuickLoad = component("<>", ManageQuickLoadComponent, {}, node(Modal, {
+      class: "quick-load",
+      style: styles({ width: "80%" }),
+      "[state]": "quickLoadModalState",
+      "[addQuickLoad]": "addQuickLoad",
+      "[closeQuickLoadModal]": "closeQuickLoadModal",
+      "[quickLoadTargets]": "quickLoadTargets",
+      "[removeItem]": "removeItem",
+      "[closeOnBackgroundClick]": "closeQuickLoadModal",
+      "[folderPathInputRef]": "folderPathInputRef",
+  }, [
+      node("ul", { class: "quick-load__list" }, node("li", Object.assign(Object.assign({}, mFor("quickLoadTargets")), { mKey: "_i", class: "quick-load__list-item" }), [
+          span("{folderPath}"),
+          node(Button, { icon: "trash-o", "[onClick]": "removeItem", "[index]": "_i" }),
+      ])),
+      node("form", { class: "flex no-margin", "(submit)": "addQuickLoad" }, [
+          node(Field, {
+              name: "folder-path",
+              label: "Folder path",
+              labelClass: "grid-6",
+              "[ref]": "folderPathInputRef",
+          }),
+          node(Button, {
+              type: "submit",
+              theme: "blueberry",
+              icon: "plus",
+              class: "margin-right margin-bottom",
+              square: true,
+              "[folderPathInputRef]": "folderPathInputRef",
+          }),
+      ]),
+      node(Button, { label: "Close", "[onClick]": "closeQuickLoadModal" }),
+  ]));
+
+  class ModalsComponent extends MintScope {
+      constructor() {
+          super();
+          modalsStore.connect(this);
+      }
+  }
+  const Modals = component("<>", ModalsComponent, {}, [
+      node(ManageQuickLoad, {
+          "[quickLoadModalState]": "quickLoadModalState",
+          "[closeQuickLoadModal]": "closeQuickLoadModal"
+      })
   ]);
 
   class AppComponent extends MintScope {
@@ -4404,11 +4569,45 @@
               "[currentTabClass]": "currentTabClass"
           }),
           div({ class: "main__controls" }, [node(Controls), node(Options)]),
-          div(Object.assign({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, mRef("mainListElementRef")), node(List, { "[isTextarea]": "isTextarea" })),
+          div(Object.assign({ class: "main__list", style: "overflow-y: {isTextareaOverflow}" }, mRef("mainListElementRef")), node("form", { "(submit)": "doNothing" }, [
+              node(List, Object.assign({}, mIf("!isTextarea"))),
+              node(Field, Object.assign(Object.assign({}, mIf("isTextarea")), { type: "textarea", "[value]": "textareaContent", labelClass: "list-item", style: "height: 100%;", readonly: true }))
+          ])),
           node(Search, Object.assign({}, mIf("isSearchOpen")))
-      ])
+      ]),
+      node(Modals)
   ]);
 
+  // ** The following events define the functions that enable opening a file
+  // ** in Cardamom directly from the file explorer.
+  {
+      // ** The file name and path of the file we're trying to access directly in
+      // ** explorer and open in Cardamom.
+      // ** This will only exists once per app so we can put it out here.
+      let filePathName;
+      // ** This event is called from 'preload.js' when the content has been loaded.
+      window.addEventListener("getFileLoaded", (event) => {
+          loadFile(event.detail.content, filePathName);
+      });
+      // ** This event runs when a file has been loaded from file explorer which
+      // ** is detected in 'main.js'.
+      window.addEventListener("appInitiatePreload", (event) => __awaiter$1(void 0, void 0, void 0, function* () {
+          // ** Get the file name and path.
+          const { detail } = event;
+          if (detail.files[1] === ".")
+              return;
+          filePathName = detail.files.at(-1);
+          // ** Wait for the rest of the Mint app to load.
+          yield wait(1000);
+          // ** Send to the Node process to get the file content.
+          const newEvent = new CustomEvent("getFromFile", {
+              detail: {
+                  filePathName,
+              },
+          });
+          window.dispatchEvent(newEvent);
+      }));
+  }
   app(document.body, {}, node(App));
 
 })();
