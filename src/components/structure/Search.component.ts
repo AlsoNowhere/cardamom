@@ -5,19 +5,26 @@ import { Button, Field } from "thyme";
 import { appStore } from "../../stores/app.store";
 import { listStore } from "../../stores/list.store";
 
+const updateSearch = (index: number) => {
+  const liElement = listStore.listElementRef.children[index] as HTMLLIElement;
+  const offset = liElement.offsetTop;
+  appStore.mainListElementRef.scrollTo(0, offset);
+};
+
 class SearchComponent extends MintScope {
-  searchStartIndex: number | null;
+  lineIndexMatches: Array<number>;
   currentSearchIndex: number | null;
 
   close: () => void;
   onSubmit: MintEvent<HTMLFormElement>;
   goToNext: MintEvent;
+  goToPrevious: MintEvent;
   runSearch: (searchValue: string) => void;
 
   constructor() {
     super();
 
-    this.searchStartIndex = null;
+    this.lineIndexMatches = [];
     this.currentSearchIndex = null;
 
     this.close = function () {
@@ -32,25 +39,35 @@ class SearchComponent extends MintScope {
     };
 
     this.goToNext = function () {
-      this.searchStartIndex = this.currentSearchIndex + 1;
-      const searchValue = document["search-form"].searchValue.value;
-      this.runSearch(searchValue);
+      if (this.currentSearchIndex === this.lineIndexMatches.length - 1) return;
+      this.currentSearchIndex++;
+      const index = this.lineIndexMatches[this.currentSearchIndex];
+      updateSearch(index);
+    }.bind(this);
+
+    this.goToPrevious = function () {
+      if (this.currentSearchIndex === 0) return;
+      this.currentSearchIndex--;
+      const index = this.lineIndexMatches[this.currentSearchIndex];
+      updateSearch(index);
     }.bind(this);
 
     this.runSearch = function (searchValue: string) {
       if (searchValue === "") return;
-      const linesSubset = listStore.lines.slice(this.searchStartIndex ?? 0);
-      const _index = linesSubset.findIndex(({ content }) => content.toLowerCase().includes(searchValue.toLowerCase()));
-      if (_index === -1) return;
-      const index = this.searchStartIndex + _index;
-      this.currentSearchIndex = index;
-      const liElement = listStore.listElementRef.children[index] as HTMLLIElement;
-      const offset = liElement.offsetTop;
-      appStore.mainListElementRef.scrollTo(0, offset);
+
+      this.lineIndexMatches = listStore.lines.reduce((a, b, i) => {
+        if (b.content.toLowerCase().includes(searchValue.toLowerCase())) {
+          a.push(i);
+        }
+        return a;
+      }, [] as Array<number>);
+
+      this.currentSearchIndex = 0;
+      const index = this.lineIndexMatches[this.currentSearchIndex];
+      updateSearch(index);
     };
 
     this.onremove = function () {
-      this.searchStartIndex = null;
       this.currentSearchIndex = null;
       document["search-form"].searchValue.value = "";
     };
@@ -61,7 +78,7 @@ export const Search = component("section", SearchComponent, { class: "search-bar
   node("header", { class: "search-bar__header" }, [
     node("h2", { class: "search-bar__header-title" }, "Search"),
 
-    node(Button, { theme: "empty", icon: "times", class: "search-bar__header-button", "[onClick]": "close" })
+    node(Button, { theme: "empty", icon: "times", class: "search-bar__header-button", "[onClick]": "close" }),
   ]),
 
   node("form", { name: "search-form", class: "search-bar__content", "(submit)": "onSubmit" }, [
@@ -69,8 +86,13 @@ export const Search = component("section", SearchComponent, { class: "search-bar
     node(Button, {
       icon: "arrow-down",
       class: "search-bar__button",
-      "[onClick]": "goToNext"
+      "[onClick]": "goToNext",
     }),
-    node(Button, { type: "submit", icon: "search", class: "search-bar__button" })
-  ])
+    node(Button, {
+      icon: "arrow-up",
+      class: "search-bar__button",
+      "[onClick]": "goToPrevious",
+    }),
+    node(Button, { type: "submit", icon: "search", class: "search-bar__button" }),
+  ]),
 ]);

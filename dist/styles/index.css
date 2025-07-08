@@ -2956,10 +2956,6 @@ form label.required > span::after {
   content: "*";
   color: #cf2a19;
 }
-form label + button {
-  margin-top: 1.2rem;
-  margin-left: 0.5rem;
-}
 input,
 textarea,
 select {
