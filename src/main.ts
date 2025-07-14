@@ -25,7 +25,14 @@ import { loadFile } from "./logic/load-file.logic";
     // ** Get the file name and path.
     const { detail } = event;
     if (detail.files[1] === ".") return;
+
     filePathName = detail.files.at(-1);
+
+    // ** Here we check that the application file itself is not being called as the
+    // ** file being opened... which does happen unfortunately.
+    if (filePathName.includes("cardamom.exe")) {
+      return;
+    }
 
     // ** Wait for the rest of the Mint app to load.
     await wait(1000);

@@ -3059,6 +3059,7 @@
       constructor() {
           super();
           this.type = "text";
+          this.class = "";
           this.style = "";
           // this.onKeyDown = null;
           this.onInput = null;
@@ -3129,6 +3130,7 @@
   class FieldSelectComponent extends MintScope {
       constructor() {
           super();
+          this.class = "";
           this.style = "";
           this.options = [];
           this.onInput = null;
@@ -3189,8 +3191,9 @@
   class FieldTextareaComponent extends MintScope {
       constructor() {
           super();
-          this.resize = false;
+          this.class = "";
           this.style = "";
+          this.resize = false;
           this.onInput = null;
           this.hasLabel = new Resolver(function () {
               return !!this.label;
@@ -4614,6 +4617,12 @@
           if (detail.files[1] === ".")
               return;
           filePathName = detail.files.at(-1);
+          console.log("But here we have it: ", filePathName);
+          // ** Here we check that the application file itself is not being called as the
+          // ** file being opened... which does happen unfortunately.
+          if (filePathName.includes("cardamom.exe")) {
+              return;
+          }
           // ** Wait for the rest of the Mint app to load.
           yield wait(1000);
           // ** Send to the Node process to get the file content.
